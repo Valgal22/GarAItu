@@ -63,7 +63,7 @@ public class GenericNetworkService {
         req.addRequestHeader("Content-Type", "application/json");
         req.addRequestHeader("Accept", "application/json");
 
-        String jsonBody = buildJson(data);
+        String jsonBody = me.sebz.mu.pbl5.utils.JsonUtil.buildJson(data);
         req.setRequestBody(jsonBody);
 
         req.addResponseListener(evt -> {
@@ -116,26 +116,5 @@ public class GenericNetworkService {
         } catch (IOException e) {
             callback.onFailure("JSON Parse Error: " + e.getMessage());
         }
-    }
-
-    // Simple JSON builder helper (since we might not have a full GSON/Jackson lib)
-    private String buildJson(Map<String, Object> data) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("{");
-        int i = 0;
-        for (Map.Entry<String, Object> entry : data.entrySet()) {
-            if (i > 0)
-                sb.append(",");
-            sb.append("\"").append(entry.getKey()).append("\":");
-            Object value = entry.getValue();
-            if (value instanceof String) {
-                sb.append("\"").append(value).append("\"");
-            } else {
-                sb.append(value);
-            }
-            i++;
-        }
-        sb.append("}");
-        return sb.toString();
     }
 }

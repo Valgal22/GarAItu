@@ -35,6 +35,7 @@ public class AdminDashboard extends Form {
                 new GenericNetworkService.NetworkCallback() {
                     @Override
                     public void onSuccess(Map<String, Object> response) {
+
                         String code = (String) response.get("code");
                         Display.getInstance().callSerially(() -> {
                             Dialog.show("Invite Code", "Share this code: " + code, "OK", null);

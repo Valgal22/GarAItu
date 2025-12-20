@@ -1,0 +1,357 @@
+package pbl.restserver.controller;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.springframework.http.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import pbl.restserver.model.FamilyGroup;
+import pbl.restserver.model.Member;
+import pbl.restserver.repositories.FamilyGroupRepository;
+import pbl.restserver.repositories.MemberRepository;
+
+@RestController
+@RequestMapping("/garAItu")
+public class Controller {
+
+  // Roles: admin 0, patient 1, member 2
+  private static final short ROLE_ADMIN = 0;
+  private static final short ROLE_PATIENT = 1;
+  private static final short ROLE_MEMBER = 2;
+
+  private final FamilyGroupRepository groupRepo;
+  private final MemberRepository memberRepo;
+  private final PasswordEncoder passwordEncoder;
+
+  // token -> memberId
+  private final Map<String, Long> sessions = new ConcurrentHashMap<>();
+
+  // inviteCode -> groupId (en memoria)
+  private final Map<String, Long> invites = new ConcurrentHashMap<>();
+
+  public Controller(FamilyGroupRepository groupRepo,
+      MemberRepository memberRepo,
+      PasswordEncoder passwordEncoder) {
+    this.groupRepo = groupRepo;
+    this.memberRepo = memberRepo;
+    this.passwordEncoder = passwordEncoder;
+  }
+
+  // -------------------------
+  // DTOs
+  // -------------------------
+  public static record RegisterRequest(String name, String email, String password, String context, short role) {
+  }
+
+  public static record LoginRequest(String email, String password) {
+  }
+
+  public static record SessionResponse(String session, Long memberId, Long familyGroupId, short role) {
+  }
+
+  public static record GroupResponse(Long id, String name) {
+  }
+
+  public static record CreateGroupRequest(String name) {
+  }
+
+  public static record JoinGroupRequest(String inviteCode) {
+  }
+
+  public static record MemberResponse(Long id, Long familyGroupId, String name, String email, String context,
+      short role, boolean hasEmbedding) {
+  }
+
+  public static record InviteResponse(String inviteCode, Long familyGroupId) {
+  }
+
+  public static record SetEmbeddingRequest(String embeddingBase64) {
+  }
+
+  public static record RecognizeRequest(
+      String embeddingBase64,
+      @RequestParam(required = false, defaultValue = "0.0") double minSim,
+      @RequestParam(required = false, defaultValue = "5") int top) {
+  }
+
+  public static record RecognizeRow(Long memberId, String name, String email, String context, double similarity) {
+  }
+
+  // -------------------------
+  // Helpers
+  // -------------------------
+  private Member requireMemberFromSession(String sessionId) {
+    if (sessionId == null || sessionId.isBlank())
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No session");
+
+    Long mid = sessions.get(sessionId);
+    if (mid == null)
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No session");
+
+    return memberRepo.findById(mid)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No member"));
+  }
+
+  private void requireAdmin(Member me) {
+    if (me.getRole() != ROLE_ADMIN)
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admin only");
+  }
+
+  private void requireSameGroup(Member me, Long groupId) {
+    if (me.getFamilyGroup() == null || !me.getFamilyGroup().getId().equals(groupId))
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Forbidden");
+  }
+
+  private byte[] decodeBase64(String b64) {
+    if (b64 == null || b64.isBlank()) {
+      return new byte[0];
+    }
+    try {
+      return Base64.getDecoder().decode(b64);
+    } catch (IllegalArgumentException ex) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bad embeddingBase64", ex);
+    }
+  }
+
+  private float[] bytesToFloatArray(byte[] bytes) {
+    if (bytes == null || bytes.length == 0) {
+      return new float[0];
+    }
+    if (bytes.length % 4 != 0) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bad embedding bytes length");
+    }
+
+    int n = bytes.length / 4;
+    float[] out = new float[n];
+    for (int i = 0; i < n; i++) {
+      int base = i * 4;
+      int bits = ((bytes[base] & 0xFF) << 24)
+          | ((bytes[base + 1] & 0xFF) << 16)
+          | ((bytes[base + 2] & 0xFF) << 8)
+          | (bytes[base + 3] & 0xFF);
+      out[i] = Float.intBitsToFloat(bits);
+    }
+    return out;
+  }
+
+  private double cosine(float[] a, float[] b) {
+    if (a.length == 0 || b.length == 0 || a.length != b.length)
+      return -1.0;
+
+    double dot = 0;
+    double na = 0;
+    double nb = 0;
+
+    for (int i = 0; i < a.length; i++) {
+      dot += a[i] * b[i];
+      na += a[i] * a[i];
+      nb += b[i] * b[i];
+    }
+    if (na == 0 || nb == 0)
+      return -1.0;
+    return dot / (Math.sqrt(na) * Math.sqrt(nb));
+  }
+
+  private GroupResponse toGroupResponse(FamilyGroup g) {
+    if (g == null)
+      return null;
+    return new GroupResponse(g.getId(), g.getName());
+  }
+
+  private MemberResponse toMemberResponse(Member m) {
+    boolean hasEmb = m.getEmbedding() != null && m.getEmbedding().length > 0;
+    Long gId = (m.getFamilyGroup() != null) ? m.getFamilyGroup().getId() : null;
+    return new MemberResponse(
+        m.getId(),
+        gId,
+        m.getName(),
+        m.getEmail(),
+        m.getContext(),
+        m.getRole(),
+        hasEmb);
+  }
+
+  // -------------------------
+  // AUTH
+  // -------------------------
+  @PostMapping(value = "/auth/register", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<MemberResponse> register(@RequestBody RegisterRequest body) {
+    if (body.name() == null || body.name().isBlank()
+        || body.email() == null || body.email().isBlank()
+        || body.password() == null || body.password().isBlank())
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name, email and password required");
+
+    if (memberRepo.findByEmail(body.email()).isPresent())
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
+
+    Member m = new Member();
+    m.setName(body.name());
+    m.setEmail(body.email());
+    m.setContext(body.context());
+    m.setRole(body.role());
+
+    m.setPasswordHash(passwordEncoder.encode(body.password()));
+    m.setEmbedding(null);
+
+    return ResponseEntity.status(HttpStatus.CREATED).body(toMemberResponse(memberRepo.save(m)));
+  }
+
+  @PostMapping(value = "/auth/login", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<SessionResponse> login(@RequestBody LoginRequest body) {
+    if (body.email() == null || body.email().isBlank()
+        || body.password() == null || body.password().isBlank())
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email and password required");
+
+     Member m = memberRepo.findByEmail(body.email())
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "The email address is not registered"));
+
+    if (m.getPasswordHash() == null || !passwordEncoder.matches(body.password(), m.getPasswordHash()))
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Incorrect password");
+
+    String token = UUID.randomUUID().toString();
+    sessions.put(token, m.getId());
+
+    Long gId = (m.getFamilyGroup() != null) ? m.getFamilyGroup().getId() : null;
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(new SessionResponse(token, m.getId(), gId, m.getRole()));
+  }
+
+  @DeleteMapping("/auth/logout/{sessionId}")
+  public ResponseEntity<Void> logout(@PathVariable String sessionId) {
+    sessions.remove(sessionId);
+    return ResponseEntity.ok().build();
+  }
+
+  // -------------------------
+  // GROUP / MEMBERS
+  // -------------------------
+  @GetMapping(value = "/group/me", produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<GroupResponse> myGroup(@RequestHeader("X-Session-Id") String sessionId) {
+    Member me = requireMemberFromSession(sessionId);
+    return ResponseEntity.ok(toGroupResponse(me.getFamilyGroup()));
+  }
+
+  @GetMapping(value = "/group/{id}/member", produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<List<MemberResponse>> getMembers(@RequestHeader("X-Session-Id") String sessionId,
+      @PathVariable Long id) {
+    Member me = requireMemberFromSession(sessionId);
+    requireSameGroup(me, id);
+
+    return ResponseEntity.ok(
+        memberRepo.findByFamilyGroupId(id).stream().map(this::toMemberResponse).toList());
+  }
+
+  @PostMapping(value = "/group/create", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<GroupResponse> createGroup(@RequestHeader("X-Session-Id") String sessionId,
+      @RequestBody CreateGroupRequest body) {
+    Member me = requireMemberFromSession(sessionId);
+    requireAdmin(me);
+
+    FamilyGroup g = new FamilyGroup();
+    g.setName(body.name());
+    g = groupRepo.save(g);
+
+    me.setFamilyGroup(g);
+    memberRepo.save(me);
+
+    return ResponseEntity.status(HttpStatus.CREATED).body(toGroupResponse(g));
+  }
+
+  @PostMapping(value = "/group/join", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<MemberResponse> joinGroup(@RequestHeader("X-Session-Id") String sessionId,
+      @RequestBody JoinGroupRequest body) {
+    Member me = requireMemberFromSession(sessionId);
+
+    if (body.inviteCode() == null || body.inviteCode().isBlank())
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "inviteCode required");
+
+    Long groupId = invites.get(body.inviteCode());
+    if (groupId == null)
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid inviteCode");
+
+    FamilyGroup g = groupRepo.findById(groupId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Group not found"));
+
+    me.setFamilyGroup(g);
+    return ResponseEntity.ok(toMemberResponse(memberRepo.save(me)));
+  }
+
+  // -------------------------
+  // INVITES (solo admin)
+  // -------------------------
+  @PostMapping(value = "/group/{id}/invite", produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<InviteResponse> createInvite(@RequestHeader("X-Session-Id") String sessionId,
+      @PathVariable Long id) {
+    Member me = requireMemberFromSession(sessionId);
+    requireAdmin(me);
+    requireSameGroup(me, id);
+
+    String code = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    invites.put(code, id);
+
+    return ResponseEntity.status(HttpStatus.CREATED).body(new InviteResponse(code, id));
+  }
+
+  // -------------------------
+  // EMBEDDING
+  // -------------------------
+  @PutMapping(value = "/member/{id}/embedding", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<MemberResponse> setEmbedding(@RequestHeader("X-Session-Id") String sessionId,
+      @PathVariable Long id,
+      @RequestBody SetEmbeddingRequest body) {
+    Member me = requireMemberFromSession(sessionId);
+
+    Member target = memberRepo.findById(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No member"));
+
+    requireSameGroup(me, target.getFamilyGroup().getId());
+    if (!me.getId().equals(id))
+      requireAdmin(me);
+
+    byte[] emb = decodeBase64(body.embeddingBase64());
+    if (emb.length == 0)
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "embeddingBase64 required");
+
+    target.setEmbedding(emb);
+    return ResponseEntity.ok(toMemberResponse(memberRepo.save(target)));
+  }
+
+  // -------------------------
+  // RECOGNIZE
+  // -------------------------
+  @PostMapping(value = "/group/{id}/recognize", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<List<RecognizeRow>> recognize(@RequestHeader("X-Session-Id") String sessionId,
+      @PathVariable Long id,
+      @RequestBody RecognizeRequest body) {
+    Member me = requireMemberFromSession(sessionId);
+    requireSameGroup(me, id);
+
+    byte[] queryBytes = decodeBase64(body.embeddingBase64());
+    if (queryBytes.length == 0)
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "embeddingBase64 required");
+
+    float[] q = bytesToFloatArray(queryBytes);
+
+    double minSim = body.minSim();
+    int safeTop = Math.max(1, Math.min(body.top(), 50));
+
+    List<RecognizeRow> ranked = memberRepo.findByFamilyGroupId(id).stream()
+        .filter(m -> m.getEmbedding() != null && m.getEmbedding().length > 0)
+        .map(m -> new AbstractMap.SimpleEntry<>(m, cosine(q, bytesToFloatArray(m.getEmbedding()))))
+        .filter(e -> e.getValue() >= minSim)
+        .sorted((a, b) -> Double.compare(b.getValue(), a.getValue()))
+        .limit(safeTop)
+        .map(e -> new RecognizeRow(
+            e.getKey().getId(),
+            e.getKey().getName(),
+            e.getKey().getEmail(),
+            e.getKey().getContext(),
+            e.getValue()))
+        .toList();
+
+    return ResponseEntity.ok(ranked);
+  }
+}

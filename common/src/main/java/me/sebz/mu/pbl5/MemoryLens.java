@@ -77,6 +77,11 @@ public class MemoryLens extends Lifecycle {
                 return;
             }
 
+            if (!email.contains("@") || !email.contains(".")) {
+                Dialog.show("Invalid Email", "Please enter a valid email address", "OK", null);
+                return;
+            }
+
             // Real Login API Call via Node-RED
             java.util.Map<String, Object> loginData = new java.util.HashMap<>();
             loginData.put("email", email);
@@ -95,6 +100,11 @@ public class MemoryLens extends Lifecycle {
                             MemoryLens.setFamilyGroupId(fgId);
 
                             Display.getInstance().callSerially(() -> {
+                                if (fgId == null) {
+                                    new GroupOnboardingForm().show();
+                                    return;
+                                }
+
                                 if ("0".equals(roleShort) || "ADMIN".equalsIgnoreCase(roleShort)) {
                                     new AdminDashboard().show();
                                 } else if ("1".equals(roleShort) || "PATIENT".equalsIgnoreCase(roleShort)) {

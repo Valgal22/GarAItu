@@ -27,11 +27,12 @@ public class RegistrationForm extends Form {
         TextField passwordField = new TextField("", "Password", 20, TextField.PASSWORD);
         passwordField.setUIID("TextField");
 
+        String[] roles = { "Caregiver (Admin)", "Patient", "Family Member" };
+        ComboBox<String> rolePicker = new ComboBox<>((Object[]) roles);
+        rolePicker.setUIID("TextField");
+
         TextField contextField = new TextField("", "Context (e.g. Who are you?)", 20, TextField.ANY);
         contextField.setUIID("TextField");
-
-        TextField inviteCodeField = new TextField("", "Invite Code", 20, TextField.ANY);
-        inviteCodeField.setUIID("TextField");
 
         Button registerButton = new Button("Register");
         registerButton.setMaterialIcon(FontImage.MATERIAL_PERSON_ADD, 5);
@@ -41,10 +42,11 @@ public class RegistrationForm extends Form {
             String email = emailField.getText();
             String password = passwordField.getText();
             String context = contextField.getText();
-            String inviteCode = inviteCodeField.getText();
+            int roleIdx = rolePicker.getSelectedIndex();
+            short role = (short) roleIdx;
 
-            if (name.isEmpty() || email.isEmpty() || password.isEmpty() || inviteCode.isEmpty()) {
-                Dialog.show("Error", "Name, Email, Password and Invite Code are required", "OK", null);
+            if (name.isEmpty() || email.isEmpty() || password.isEmpty()) {
+                Dialog.show("Error", "Name, Email and Password are required", "OK", null);
                 return;
             }
 
@@ -53,14 +55,14 @@ public class RegistrationForm extends Form {
             regData.put("email", email);
             regData.put("password", password);
             regData.put("context", context);
-            regData.put("inviteCode", inviteCode);
+            regData.put("role", role);
 
             GenericNetworkService.getInstance().post("/api/auth/register", regData,
                     new GenericNetworkService.NetworkCallback() {
                         @Override
                         public void onSuccess(Map<String, Object> response) {
                             Display.getInstance().callSerially(() -> {
-                                Dialog.show("Success", "Account created! You can now login.", "OK", null);
+                                Dialog.show("Success", "Account created! Please login to join a group.", "OK", null);
                                 MemoryLens.showLoginScreen();
                             });
                         }
@@ -79,11 +81,16 @@ public class RegistrationForm extends Form {
         backButton.addActionListener(e -> MemoryLens.showLoginScreen());
 
         center.add(title);
+        center.add(new Label("Name:"));
         center.add(nameField);
+        center.add(new Label("Email:"));
         center.add(emailField);
+        center.add(new Label("Password:"));
         center.add(passwordField);
+        center.add(new Label("Role:"));
+        center.add(rolePicker);
+        center.add(new Label("Context (optional):"));
         center.add(contextField);
-        center.add(inviteCodeField);
         center.add(registerButton);
         center.add(backButton);
 

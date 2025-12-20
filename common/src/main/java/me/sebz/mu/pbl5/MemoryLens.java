@@ -14,6 +14,25 @@ import com.codename1.ui.util.Resources;
  * of building native mobile applications using Java.
  */
 public class MemoryLens extends Lifecycle {
+    private static String sessionToken;
+    private static Long familyGroupId;
+
+    public static String getSessionToken() {
+        return sessionToken;
+    }
+
+    public static void setSessionToken(String token) {
+        sessionToken = token;
+    }
+
+    public static Long getFamilyGroupId() {
+        return familyGroupId;
+    }
+
+    public static void setFamilyGroupId(Long id) {
+        familyGroupId = id;
+    }
+
     @Override
     public void runApp() {
         showLoginScreen();
@@ -44,6 +63,11 @@ public class MemoryLens extends Lifecycle {
         Button loginButton = new Button("Login");
         loginButton.setMaterialIcon(FontImage.MATERIAL_LOGIN, 5);
 
+        Button registerButton = new Button("Register");
+        registerButton.setUIID("ButtonSecondary");
+        registerButton.setMaterialIcon(FontImage.MATERIAL_PERSON_ADD, 5);
+        registerButton.addActionListener(e -> new RegistrationForm().show());
+
         loginButton.addActionListener(e -> {
             String email = emailField.getText();
             String password = passwordField.getText();
@@ -53,21 +77,7 @@ public class MemoryLens extends Lifecycle {
                 return;
             }
 
-            // [DEV] Bypass for testing without Node-RED
-            if (email.equalsIgnoreCase("admin")) {
-                new AdminDashboard().show();
-                return;
-            }
-            if (email.equalsIgnoreCase("family")) {
-                new FamilyDashboard().show();
-                return;
-            }
-            if (email.equalsIgnoreCase("patient")) {
-                new PatientDashboard().show();
-                return;
-            }
-
-            // Simulate Login API Call
+            // Real Login API Call via Node-RED
             java.util.Map<String, Object> loginData = new java.util.HashMap<>();
             loginData.put("email", email);
             loginData.put("password", password);
@@ -76,19 +86,24 @@ public class MemoryLens extends Lifecycle {
                     new GenericNetworkService.NetworkCallback() {
                         @Override
                         public void onSuccess(java.util.Map<String, Object> response) {
-                            String role = (String) response.get("role");
-                            // String token = (String) response.get("token");
-                            // Save token to Storage in real app
+                            String roleShort = String.valueOf(response.get("role"));
+                            String token = (String) response.get("session");
+                            Object fgIdObj = response.get("familyGroupId");
+                            Long fgId = (fgIdObj instanceof Number) ? ((Number) fgIdObj).longValue() : null;
+
+                            MemoryLens.setSessionToken(token);
+                            MemoryLens.setFamilyGroupId(fgId);
 
                             Display.getInstance().callSerially(() -> {
-                                if ("ADMIN".equalsIgnoreCase(role)) {
+                                if ("0".equals(roleShort) || "ADMIN".equalsIgnoreCase(roleShort)) {
                                     new AdminDashboard().show();
-                                } else if ("FAMILY".equalsIgnoreCase(role)) {
-                                    new FamilyDashboard().show();
-                                } else if ("PATIENT".equalsIgnoreCase(role)) {
+                                } else if ("1".equals(roleShort) || "PATIENT".equalsIgnoreCase(roleShort)) {
                                     new PatientDashboard().show();
+                                } else if ("2".equals(roleShort) || "MEMBER".equalsIgnoreCase(roleShort)
+                                        || "FAMILY".equalsIgnoreCase(roleShort)) {
+                                    new FamilyDashboard().show();
                                 } else {
-                                    Dialog.show("Error", "Unknown Role: " + role, "OK", null);
+                                    Dialog.show("Error", "Unknown Role: " + roleShort, "OK", null);
                                 }
                             });
                         }
@@ -107,6 +122,7 @@ public class MemoryLens extends Lifecycle {
         center.add(emailField);
         center.add(passwordField);
         center.add(loginButton);
+        center.add(registerButton);
 
         loginForm.add(BorderLayout.CENTER, center);
         loginForm.show();

@@ -28,9 +28,12 @@ public class AdminDashboard extends Form {
         this.add(logoutButton);
     }
 
-    private long groupId = 1; // Placeholder: In a real app, this would come from the login response
-
     private void generateInvite() {
+        Long groupId = MemoryLens.getFamilyGroupId();
+        if (groupId == null) {
+            Dialog.show("Error", "No Group ID found. Please login again.", "OK", null);
+            return;
+        }
         GenericNetworkService.getInstance().get("/api/groups/" + groupId + "/invite",
                 new GenericNetworkService.NetworkCallback() {
                     @Override

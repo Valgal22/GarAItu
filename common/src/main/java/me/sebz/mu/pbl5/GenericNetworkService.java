@@ -39,6 +39,10 @@ public class GenericNetworkService {
         req.setUrl(fullUrl);
         req.setHttpMethod("GET");
         req.addRequestHeader("Accept", "application/json");
+        String token = MemoryLens.getSessionToken();
+        if (token != null) {
+            req.addRequestHeader("X-Session-Id", token);
+        }
 
         req.addResponseListener(evt -> {
             System.out.println("[Network] Response Code: " + req.getResponseCode());
@@ -62,6 +66,10 @@ public class GenericNetworkService {
         req.setHttpMethod("POST");
         req.addRequestHeader("Content-Type", "application/json");
         req.addRequestHeader("Accept", "application/json");
+        String token = MemoryLens.getSessionToken();
+        if (token != null) {
+            req.addRequestHeader("X-Session-Id", token);
+        }
 
         String jsonBody = me.sebz.mu.pbl5.utils.JsonUtil.buildJson(data);
         req.setRequestBody(jsonBody);
@@ -83,6 +91,10 @@ public class GenericNetworkService {
     public void upload(String endpoint, String filePath, Map<String, Object> data, NetworkCallback callback) {
         MultipartRequest req = new MultipartRequest();
         req.setUrl(BASE_URL + endpoint);
+        String token = MemoryLens.getSessionToken();
+        if (token != null) {
+            req.addRequestHeader("X-Session-Id", token);
+        }
 
         try {
             req.addData("file", filePath, "image/jpeg");

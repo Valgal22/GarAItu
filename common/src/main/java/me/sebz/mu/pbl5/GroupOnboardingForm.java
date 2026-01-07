@@ -114,8 +114,6 @@ public class GroupOnboardingForm extends Form {
     }
 
     private void navigateToDashboard() {
-        // Logic should be same as MemoryLens login success
-        // For simplicity, just call runApp or similar dispatch logic
-        MemoryLens.showLoginScreen(); // Re-login to get fresh state or just show appropriate dash
+        MemoryLens.navigateToAppropriateDashboard();
     }
 }

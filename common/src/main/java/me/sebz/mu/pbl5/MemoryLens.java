@@ -16,6 +16,7 @@ import com.codename1.ui.util.Resources;
 public class MemoryLens extends Lifecycle {
     private static String sessionToken;
     private static Long familyGroupId;
+    private static String userRole;
 
     public static String getSessionToken() {
         return sessionToken;
@@ -31,6 +32,35 @@ public class MemoryLens extends Lifecycle {
 
     public static void setFamilyGroupId(Long id) {
         familyGroupId = id;
+    }
+
+    public static String getUserRole() {
+        return userRole;
+    }
+
+    public static void setUserRole(String role) {
+        userRole = role;
+    }
+
+    public static void navigateToAppropriateDashboard() {
+        Display.getInstance().callSerially(() -> {
+            if (familyGroupId == null) {
+                new GroupOnboardingForm().show();
+                return;
+            }
+
+            String roleShort = userRole;
+            if ("0".equals(roleShort) || "ADMIN".equalsIgnoreCase(roleShort)) {
+                new AdminDashboard().show();
+            } else if ("1".equals(roleShort) || "PATIENT".equalsIgnoreCase(roleShort)) {
+                new PatientDashboard().show();
+            } else if ("2".equals(roleShort) || "MEMBER".equalsIgnoreCase(roleShort)
+                    || "FAMILY".equalsIgnoreCase(roleShort)) {
+                new FamilyDashboard().show();
+            } else {
+                Dialog.show("Error", "Unknown Role: " + roleShort, "OK", null);
+            }
+        });
     }
 
     @Override
@@ -98,24 +128,9 @@ public class MemoryLens extends Lifecycle {
 
                             MemoryLens.setSessionToken(token);
                             MemoryLens.setFamilyGroupId(fgId);
+                            MemoryLens.setUserRole(roleShort);
 
-                            Display.getInstance().callSerially(() -> {
-                                if (fgId == null) {
-                                    new GroupOnboardingForm().show();
-                                    return;
-                                }
-
-                                if ("0".equals(roleShort) || "ADMIN".equalsIgnoreCase(roleShort)) {
-                                    new AdminDashboard().show();
-                                } else if ("1".equals(roleShort) || "PATIENT".equalsIgnoreCase(roleShort)) {
-                                    new PatientDashboard().show();
-                                } else if ("2".equals(roleShort) || "MEMBER".equalsIgnoreCase(roleShort)
-                                        || "FAMILY".equalsIgnoreCase(roleShort)) {
-                                    new FamilyDashboard().show();
-                                } else {
-                                    Dialog.show("Error", "Unknown Role: " + roleShort, "OK", null);
-                                }
-                            });
+                            MemoryLens.navigateToAppropriateDashboard();
                         }
 
                         @Override

@@ -59,7 +59,9 @@ public class PatientDashboard extends Form {
         String filePath = Capture.capturePhoto(1024, -1);
         if (filePath != null) {
             ToastBar.showInfoMessage("Analyzing...");
-            GenericNetworkService.getInstance().upload("/api/recognize", filePath, new HashMap<>(),
+            Long groupId = MemoryLens.getFamilyGroupId();
+            GenericNetworkService.getInstance().upload("/api/groups/" + groupId + "/recognize", filePath,
+                    new HashMap<>(),
                     new GenericNetworkService.NetworkCallback() {
                         @Override
                         public void onSuccess(Map<String, Object> response) {

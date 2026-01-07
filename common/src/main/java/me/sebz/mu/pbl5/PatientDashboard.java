@@ -44,8 +44,14 @@ public class PatientDashboard extends Form {
 
         this.add(BorderLayout.CENTER, scanFaceButton);
 
+        Button uploadImageButton = new Button("Upload Image");
+        uploadImageButton.setUIID("ButtonSecondary");
+        uploadImageButton.setMaterialIcon(FontImage.MATERIAL_CLOUD_UPLOAD, 7);
+        uploadImageButton.addActionListener(e -> uploadImage());
+
         Container bottomContainer = new Container(new BorderLayout());
         bottomContainer.add(BorderLayout.CENTER, voiceQueryButton);
+        bottomContainer.add(BorderLayout.NORTH, uploadImageButton); // Added Upload Button
 
         Button logoutButton = new Button("Logout");
         logoutButton.setUIID("ButtonSecondary");
@@ -86,6 +92,47 @@ public class PatientDashboard extends Form {
                         }
                     });
         }
+    }
+
+    private void uploadImage() {
+        Display.getInstance().openGallery(e -> {
+            if (e != null && e.getSource() != null) {
+                String filePath = (String) e.getSource();
+                ToastBar.showInfoMessage("Uploading...");
+
+                // Use the generic /api/recognize as per user request (or /api/groups/... if
+                // intended context is same)
+                // User request said: "hara un POST a node-RED mandandole la imagen a
+                // /api/recognize"
+                // So we will use "/api/recognize"
+
+                GenericNetworkService.getInstance().upload("/api/recognize", filePath,
+                        new HashMap<>(),
+                        new GenericNetworkService.NetworkCallback() {
+                            @Override
+                            public void onSuccess(Map<String, Object> response) {
+                                // Assuming response format similar to face scan
+                                String name = (String) response.get("name");
+                                if (name == null)
+                                    name = "Unknown";
+
+                                String message = "Result: " + name;
+                                // Adjust based on actual server response fields if different
+
+                                Display.getInstance().callSerially(() -> {
+                                    Dialog.show("Upload Result", message, "OK", null);
+                                });
+                            }
+
+                            @Override
+                            public void onFailure(String errorMessage) {
+                                Display.getInstance().callSerially(() -> {
+                                    Dialog.show("Error", "Upload failed: " + errorMessage, "OK", null);
+                                });
+                            }
+                        });
+            }
+        }, Display.GALLERY_IMAGE);
     }
 
     private void recordVoice() {

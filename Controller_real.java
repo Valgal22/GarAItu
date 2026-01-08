@@ -43,7 +43,7 @@ public class Controller {
   // -------------------------
   // DTOs
   // -------------------------
-  public static record RegisterRequest(String name, String email, String password, String context, short role) {
+  public static record RegisterRequest(String name, String email, String password, String context, Short role) {
   }
 
   public static record LoginRequest(String email, String password) {
@@ -193,7 +193,7 @@ public class Controller {
     m.setName(body.name());
     m.setEmail(body.email());
     m.setContext(body.context());
-    m.setRole(body.role());
+    m.setRole(body.role() != null ? body.role() : ROLE_MEMBER);
 
     m.setPasswordHash(passwordEncoder.encode(body.password()));
     m.setEmbedding(null);
@@ -276,13 +276,12 @@ public class Controller {
   public ResponseEntity<GroupResponse> createGroup(@RequestHeader("X-Session-Id") String sessionId,
       @RequestBody CreateGroupRequest body) {
     Member me = requireMemberFromSession(sessionId);
-    requireAdmin(me);
-
     FamilyGroup g = new FamilyGroup();
     g.setName(body.name());
     g = groupRepo.save(g);
 
     me.setFamilyGroup(g);
+    me.setRole(ROLE_ADMIN);
     memberRepo.save(me);
 
     return ResponseEntity.status(HttpStatus.CREATED).body(toGroupResponse(g));
@@ -304,6 +303,7 @@ public class Controller {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Group not found"));
 
     me.setFamilyGroup(g);
+    me.setRole(ROLE_MEMBER);
     return ResponseEntity.ok(toMemberResponse(memberRepo.save(me)));
   }
 

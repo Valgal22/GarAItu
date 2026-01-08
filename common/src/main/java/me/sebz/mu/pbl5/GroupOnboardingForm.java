@@ -96,6 +96,8 @@ public class GroupOnboardingForm extends Form {
                             Object fgIdObj = response.get("id");
                             Long fgId = (fgIdObj instanceof Number) ? ((Number) fgIdObj).longValue() : null;
                             MemoryLens.setFamilyGroupId(fgId);
+                            // Set role to ADMIN (0) since creator is admin
+                            MemoryLens.setUserRole("0");
 
                             Display.getInstance().callSerially(() -> {
                                 Dialog.show("Success", "Group created successfully!", "OK", null);

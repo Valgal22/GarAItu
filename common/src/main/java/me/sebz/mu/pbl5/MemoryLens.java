@@ -50,15 +50,17 @@ public class MemoryLens extends Lifecycle {
             }
 
             String roleShort = userRole;
-            if ("0".equals(roleShort) || "ADMIN".equalsIgnoreCase(roleShort)) {
+            if (roleShort == null)
+                roleShort = "2"; // Default fallback
+            // Handle "0.0" or "0"
+            if (roleShort.startsWith("0") || "ADMIN".equalsIgnoreCase(roleShort)) {
                 new AdminDashboard().show();
-            } else if ("1".equals(roleShort) || "PATIENT".equalsIgnoreCase(roleShort)) {
+            } else if (roleShort.startsWith("1") || "PATIENT".equalsIgnoreCase(roleShort)) {
                 new PatientDashboard().show();
-            } else if ("2".equals(roleShort) || "MEMBER".equalsIgnoreCase(roleShort)
-                    || "FAMILY".equalsIgnoreCase(roleShort)) {
-                new FamilyDashboard().show();
             } else {
-                Dialog.show("Error", "Unknown Role: " + roleShort, "OK", null);
+                // Default fallback to Family Dashboard for "2" or anything else unknown (safe
+                // fail)
+                new FamilyDashboard().show();
             }
         });
     }

@@ -15,7 +15,8 @@ public class GenericNetworkService {
     private static final String BASE_URL = "http://localhost:1880"; // Node-RED
     private static GenericNetworkService instance;
 
-    private GenericNetworkService() {}
+    private GenericNetworkService() {
+    }
 
     public static GenericNetworkService getInstance() {
         if (instance == null) {
@@ -24,17 +25,22 @@ public class GenericNetworkService {
         return instance;
     }
 
-    /* ==========================
-       CALLBACK
-       ========================== */
+    /*
+     * ==========================
+     * CALLBACK
+     * ==========================
+     */
     public interface NetworkCallback {
         void onSuccess(Map<String, Object> response);
+
         void onFailure(String errorMessage);
     }
 
-    /* ==========================
-       GET (JSON)
-       ========================== */
+    /*
+     * ==========================
+     * GET (JSON)
+     * ==========================
+     */
     public void get(String endpoint, NetworkCallback callback) {
         ConnectionRequest req = new ConnectionRequest();
         req.setUrl(BASE_URL + endpoint);
@@ -49,23 +55,23 @@ public class GenericNetworkService {
 
         req.addResponseListener(evt -> {
             int code = req.getResponseCode();
-            if (code == 200) {
+            if (code == 200 || code == 201) {
                 parseResponse(req.getResponseData(), callback);
             } else {
                 callback.onFailure("Server Error: " + code);
             }
         });
 
-        req.addExceptionListener(evt ->
-                callback.onFailure("Connection failed. Is Node-RED running?")
-        );
+        req.addExceptionListener(evt -> callback.onFailure("Connection failed. Is Node-RED running?"));
 
         NetworkManager.getInstance().addToQueue(req);
     }
 
-    /* ==========================
-       POST (JSON REAL)
-       ========================== */
+    /*
+     * ==========================
+     * POST (JSON REAL)
+     * ==========================
+     */
     public void post(String endpoint, Map<String, Object> data, NetworkCallback callback) {
 
         ConnectionRequest req = new ConnectionRequest();
@@ -96,16 +102,16 @@ public class GenericNetworkService {
             }
         });
 
-        req.addExceptionListener(evt ->
-                callback.onFailure("Connection failed. Is Node-RED running?")
-        );
+        req.addExceptionListener(evt -> callback.onFailure("Connection failed. Is Node-RED running?"));
 
         NetworkManager.getInstance().addToQueue(req);
     }
 
-    /* ==========================
-       UPLOAD (MULTIPART)
-       ========================== */
+    /*
+     * ==========================
+     * UPLOAD (MULTIPART)
+     * ==========================
+     */
     public void upload(String endpoint, String filePath, Map<String, Object> data, NetworkCallback callback) {
 
         MultipartRequest req = new MultipartRequest();
@@ -137,22 +143,21 @@ public class GenericNetworkService {
             }
         });
 
-        req.addExceptionListener(evt ->
-                callback.onFailure("Upload failed. Check connection.")
-        );
+        req.addExceptionListener(evt -> callback.onFailure("Upload failed. Check connection."));
 
         NetworkManager.getInstance().addToQueue(req);
     }
 
-    /* ==========================
-       RESPONSE PARSER
-       ========================== */
+    /*
+     * ==========================
+     * RESPONSE PARSER
+     * ==========================
+     */
     private void parseResponse(byte[] data, NetworkCallback callback) {
         try {
             JSONParser parser = new JSONParser();
             Map<String, Object> result = parser.parseJSON(
-                    new InputStreamReader(new ByteArrayInputStream(data), "UTF-8")
-            );
+                    new InputStreamReader(new ByteArrayInputStream(data), "UTF-8"));
             callback.onSuccess(result);
         } catch (IOException e) {
             callback.onFailure("JSON parse error: " + e.getMessage());

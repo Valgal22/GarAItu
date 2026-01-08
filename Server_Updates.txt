@@ -1,0 +1,21 @@
+
+// 1. En tu archivo FamilyGroup.java (Modelo)
+// Añade este campo y sus getters/setters:
+
+@Column(unique = true)
+private String inviteCode;
+
+public String getInviteCode() {
+    return inviteCode;
+}
+
+public void setInviteCode(String inviteCode) {
+    this.inviteCode = inviteCode;
+}
+
+// ---------------------------------------------------------
+
+// 2. En tu archivo FamilyGroupRepository.java (Repositorio)
+// Añade este método a la interfaz:
+
+Optional<FamilyGroup> findByInviteCode(String inviteCode);

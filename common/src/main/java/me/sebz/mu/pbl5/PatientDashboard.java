@@ -44,7 +44,7 @@ public class PatientDashboard extends Form {
 
         this.add(BorderLayout.CENTER, scanFaceButton);
 
-        Button uploadImageButton = new Button("Upload Image");
+        Button uploadImageButton = new Button("Upload Image DEBUG");
         uploadImageButton.setUIID("ButtonSecondary");
         uploadImageButton.setMaterialIcon(FontImage.MATERIAL_CLOUD_UPLOAD, 7);
         uploadImageButton.addActionListener(e -> uploadImage());
@@ -66,7 +66,7 @@ public class PatientDashboard extends Form {
         if (filePath != null) {
             ToastBar.showInfoMessage("Analyzing...");
             Long groupId = MemoryLens.getFamilyGroupId();
-            GenericNetworkService.getInstance().upload("/api/groups/" + groupId + "/recognize", filePath,
+            GenericNetworkService.getInstance().upload("/api/recognize", filePath,
                     new HashMap<>(),
                     new GenericNetworkService.NetworkCallback() {
                         @Override
@@ -95,9 +95,14 @@ public class PatientDashboard extends Form {
     }
 
     private void uploadImage() {
+        // DEBUG: Verify button click
+        Dialog.show("Debug", "Upload Button Clicked. Opening Gallery...", "OK", null);
+
         Display.getInstance().openGallery(e -> {
             if (e != null && e.getSource() != null) {
                 String filePath = (String) e.getSource();
+                System.out.println("Selected file: " + filePath);
+
                 ToastBar.showInfoMessage("Uploading...");
 
                 // Use the generic /api/recognize as per user request (or /api/groups/... if
@@ -106,8 +111,23 @@ public class PatientDashboard extends Form {
                 // /api/recognize"
                 // So we will use "/api/recognize"
 
+                Map<String, Object> params = new HashMap<>();
+                Long groupId = MemoryLens.getFamilyGroupId();
+
+                System.out.println("Group ID: " + groupId);
+
+                // DEBUG: Force a Dialog to confirm ID visibility
+                Dialog.show("Debug", "Uploading with Group ID: " + groupId, "OK", null);
+
+                if (groupId != null) {
+                    params.put("groupId", groupId);
+                } else {
+                    Dialog.show("Error", "Group ID is null. Please login again.", "OK", null);
+                    return;
+                }
+
                 GenericNetworkService.getInstance().upload("/api/recognize", filePath,
-                        new HashMap<>(),
+                        params,
                         new GenericNetworkService.NetworkCallback() {
                             @Override
                             public void onSuccess(Map<String, Object> response) {
@@ -131,6 +151,9 @@ public class PatientDashboard extends Form {
                                 });
                             }
                         });
+            } else {
+                System.out.println("No image selected");
+                Dialog.show("Info", "No image selected", "OK", null);
             }
         }, Display.GALLERY_IMAGE);
     }

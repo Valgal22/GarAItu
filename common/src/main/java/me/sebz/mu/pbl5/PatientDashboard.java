@@ -71,16 +71,35 @@ public class PatientDashboard extends Form {
                     new GenericNetworkService.NetworkCallback() {
                         @Override
                         public void onSuccess(Map<String, Object> response) {
-                            String name = (String) response.get("name");
-                            String relationship = (String) response.get("relationship");
-                            String message = "This is " + name + ", your " + relationship;
+                            System.out.println("scanFace Response: " + response); // LOGGING ADDED
 
+                            // The parser returns 'root' if it's a JSON array
+                            java.util.List<Map<String, Object>> list = (java.util.List<Map<String, Object>>) response
+                                    .get("root");
+                            String name = "Desconocido";
+                            String message = "Result: " + name;
+
+                            if (list != null && !list.isEmpty()) {
+                                Map<String, Object> top = list.get(0);
+                                if (top != null) {
+                                    Double score = (Double) top.get("similarity");
+                                    System.out.println("Top score: " + score); // LOG SCORE
+                                    if (score != null && score > 0.4) {
+                                        name = (String) top.get("name");
+                                        String context = (String) top.get("context");
+                                        if (context != null && !context.isEmpty()) {
+                                            message = "This is " + name + " (" + context + ")";
+                                        } else {
+                                            message = "This is " + name;
+                                        }
+                                    }
+                                }
+                            }
+
+                            final String resultMsg = message;
                             Display.getInstance().callSerially(() -> {
-                                Dialog.show("Result", message, "OK", null);
+                                Dialog.show("Result", resultMsg, "OK", null);
                                 // In a real app, we would use TextToSpeech here
-                                // CN1 doesn't have a built-in TTS lib in the core, usually requires a cn1lib or
-                                // native interface.
-                                // For this demo, we'll simulate it with a Dialog.
                             });
                         }
 
@@ -131,16 +150,34 @@ public class PatientDashboard extends Form {
                         new GenericNetworkService.NetworkCallback() {
                             @Override
                             public void onSuccess(Map<String, Object> response) {
-                                // Assuming response format similar to face scan
-                                String name = (String) response.get("name");
-                                if (name == null)
-                                    name = "Unknown";
+                                System.out.println("uploadImage Response: " + response); // LOGGING ADDED
 
+                                // The parser returns 'root' if it's a JSON array
+                                java.util.List<Map<String, Object>> list = (java.util.List<Map<String, Object>>) response
+                                        .get("root");
+                                String name = "Desconocido";
                                 String message = "Result: " + name;
-                                // Adjust based on actual server response fields if different
 
+                                if (list != null && !list.isEmpty()) {
+                                    Map<String, Object> top = list.get(0);
+                                    if (top != null) {
+                                        Double score = (Double) top.get("similarity");
+                                        System.out.println("Top score: " + score); // LOG SCORE
+                                        if (score != null && score > 0.4) {
+                                            name = (String) top.get("name");
+                                            String context = (String) top.get("context");
+                                            if (context != null && !context.isEmpty()) {
+                                                message = "This is " + name + " (" + context + ")";
+                                            } else {
+                                                message = "This is " + name;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                final String resultMsg = message;
                                 Display.getInstance().callSerially(() -> {
-                                    Dialog.show("Upload Result", message, "OK", null);
+                                    Dialog.show("Result", resultMsg, "OK", null);
                                 });
                             }
 

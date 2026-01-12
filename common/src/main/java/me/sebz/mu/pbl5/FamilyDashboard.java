@@ -95,13 +95,27 @@ public class FamilyDashboard extends Form {
         data.put("name", nameField.getText());
         data.put("relationship", relationshipPicker.getSelectedItem());
         data.put("context", contextArea.getText());
+        // Added required IDs
+        Long mId = MemoryLens.getMemberId();
+        Long gId = MemoryLens.getFamilyGroupId();
+
+        System.out.println("Uploading Memory with mId=" + mId + ", gId=" + gId); // DEBUG
+
+        if (mId == null || gId == null) {
+            Dialog.show("Error", "Session invalid (missing IDs). Please Logout and Login again.", "OK", null);
+            return;
+        }
+
+        data.put("id", mId);
+        data.put("groupId", gId);
 
         GenericNetworkService.getInstance().upload("/api/upload", imagePath, data,
                 new GenericNetworkService.NetworkCallback() {
                     @Override
                     public void onSuccess(Map<String, Object> response) {
+                        System.out.println("Upload Success Response: " + response);
                         Display.getInstance().callSerially(() -> {
-                            Dialog.show("Success", "Memory uploaded successfully!", "OK", null);
+                            Dialog.show("Success", "Memory/Face uploaded successfully!", "OK", null);
                             nameField.clear();
                             contextArea.setText("");
                             imageLabel.setIcon(null);

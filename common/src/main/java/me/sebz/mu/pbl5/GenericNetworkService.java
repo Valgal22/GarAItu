@@ -123,10 +123,15 @@ public class GenericNetworkService {
         }
 
         try {
+            System.out.println("GenericNetworkService: Adding file to request: " + filePath); // DEBUG
             req.addData("file", filePath, "image/jpeg");
 
             for (Map.Entry<String, Object> entry : data.entrySet()) {
-                req.addArgument(entry.getKey(), entry.getValue().toString());
+                Object val = entry.getValue();
+                if (val != null) {
+                    System.out.println("  Adding arg: " + entry.getKey() + " = " + val); // DEBUG
+                    req.addArgument(entry.getKey(), val.toString());
+                }
             }
 
         } catch (IOException e) {

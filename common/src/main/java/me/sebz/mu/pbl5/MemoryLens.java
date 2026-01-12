@@ -15,6 +15,7 @@ import com.codename1.ui.util.Resources;
  */
 public class MemoryLens extends Lifecycle {
     private static String sessionToken;
+    private static Long memberId;
     private static Long familyGroupId;
     private static String userRole;
 
@@ -24,6 +25,14 @@ public class MemoryLens extends Lifecycle {
 
     public static void setSessionToken(String token) {
         sessionToken = token;
+    }
+
+    public static Long getMemberId() {
+        return memberId;
+    }
+
+    public static void setMemberId(Long id) {
+        memberId = id;
     }
 
     public static Long getFamilyGroupId() {
@@ -128,8 +137,12 @@ public class MemoryLens extends Lifecycle {
                             Object fgIdObj = response.get("familyGroupId");
                             Long fgId = (fgIdObj instanceof Number) ? ((Number) fgIdObj).longValue() : null;
 
+                            Object mIdObj = response.get("memberId");
+                            Long mId = (mIdObj instanceof Number) ? ((Number) mIdObj).longValue() : null;
+
                             MemoryLens.setSessionToken(token);
                             MemoryLens.setFamilyGroupId(fgId);
+                            MemoryLens.setMemberId(mId);
                             MemoryLens.setUserRole(roleShort);
 
                             MemoryLens.navigateToAppropriateDashboard();

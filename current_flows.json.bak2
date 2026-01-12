@@ -1,0 +1,926 @@
+[
+    {
+        "id": "0fa7dbab6a6771ab",
+        "type": "tab",
+        "label": "MemoryLens Flow",
+        "disabled": true,
+        "info": ""
+    },
+    {
+        "id": "4f1c296af823412b",
+        "type": "tab",
+        "label": "MemoryLens Flow",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "telegram_bot_config",
+        "type": "telegram bot",
+        "botname": "garaitubot",
+        "usernames": "",
+        "chatids": "",
+        "baseapiurl": "",
+        "testenvironment": false,
+        "updatemode": "polling",
+        "pollinterval": "300",
+        "usesocks": false,
+        "sockshost": "",
+        "socksport": "",
+        "socksusername": "",
+        "sockspassword": "",
+        "bothost": "",
+        "botpath": "",
+        "localbothost": "",
+        "localbotport": "",
+        "publicbotport": "",
+        "privatekey": "",
+        "certificate": "",
+        "useselfsignedcertificate": false,
+        "sslterminated": false,
+        "verboselogging": false
+    },
+    {
+        "id": "b2a22d7aee97b23e",
+        "type": "http in",
+        "z": "0fa7dbab6a6771ab",
+        "name": "Mobile Scan Endpoint",
+        "url": "/mobile/scan",
+        "method": "post",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 140,
+        "y": 100,
+        "wires": [
+            [
+                "4bbde7dd4f4f6ee9"
+            ]
+        ]
+    },
+    {
+        "id": "4bbde7dd4f4f6ee9",
+        "type": "json-schema",
+        "z": "0fa7dbab6a6771ab",
+        "name": "Validate Request",
+        "func": "{\n    \"type\": \"object\",\n        \"properties\": {\n        \"image\": {\n            \"type\": \"string\",\n                \"description\": \"Base64 encoded image string\"\n        },\n        \"token\": {\n            \"type\": \"string\",\n                \"description\": \"Authentication token\"\n        },\n        \"groupId\": {\n            \"type\": \"string\",\n                \"description\": \"ID of the family group\"\n        }\n    },\n    \"required\": [\n        \"image\",\n        \"token\"\n    ]\n}\n",
+        "x": 350,
+        "y": 100,
+        "wires": [
+            [
+                "821b2cae4f516dd8"
+            ]
+        ]
+    },
+    {
+        "id": "821b2cae4f516dd8",
+        "type": "http request",
+        "z": "0fa7dbab6a6771ab",
+        "name": "Identify Face (Spring Boot)",
+        "method": "POST",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://localhost:8080/api/faces/identify",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "",
+        "x": 600,
+        "y": 100,
+        "wires": [
+            [
+                "c6b92b0f20e37388",
+                "5b85157412a4d98a"
+            ]
+        ]
+    },
+    {
+        "id": "c6b92b0f20e37388",
+        "type": "switch",
+        "z": "0fa7dbab6a6771ab",
+        "name": "Face Identified?",
+        "property": "payload.personName",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "nnull"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 850,
+        "y": 100,
+        "wires": [
+            [
+                "771c63b9e22dc6aa"
+            ]
+        ]
+    },
+    {
+        "id": "771c63b9e22dc6aa",
+        "type": "telegram sender",
+        "z": "0fa7dbab6a6771ab",
+        "name": "Notify Family",
+        "bot": "telegram_bot_config",
+        "haserroroutput": false,
+        "outputs": 1,
+        "x": 1050,
+        "y": 100,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "5b85157412a4d98a",
+        "type": "http response",
+        "z": "0fa7dbab6a6771ab",
+        "name": "Return Context",
+        "statusCode": "200",
+        "headers": {},
+        "x": 880,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "66d5be628c26128b",
+        "type": "http in",
+        "z": "0fa7dbab6a6771ab",
+        "name": "Login Endpoint",
+        "url": "/api/auth/login",
+        "method": "post",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 150,
+        "y": 200,
+        "wires": [
+            [
+                "8517dbad89c5eb6f"
+            ]
+        ]
+    },
+    {
+        "id": "8517dbad89c5eb6f",
+        "type": "http request",
+        "z": "0fa7dbab6a6771ab",
+        "name": "Login (Spring Boot)",
+        "method": "POST",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://localhost:8080/api/auth/login",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 400,
+        "y": 200,
+        "wires": [
+            [
+                "5b85157412a4d98a"
+            ]
+        ]
+    },
+    {
+        "id": "307fe2cf325d9def",
+        "type": "http in",
+        "z": "0fa7dbab6a6771ab",
+        "name": "Invite Endpoint",
+        "url": "/api/groups/:id/invite",
+        "method": "get",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 80,
+        "y": 300,
+        "wires": [
+            [
+                "a0336666254ecbf2",
+                "fa943c52d7fdcdf2"
+            ]
+        ]
+    },
+    {
+        "id": "a0336666254ecbf2",
+        "type": "function",
+        "z": "0fa7dbab6a6771ab",
+        "name": "Set URL",
+        "func": "// 1. Corregimos la URL del backend (quitando /api/ que sobraba)\nmsg.url = \"http://localhost:8080/garAItu/group/\" + msg.req.params.id + \"/invite\";\n// 2. Forzamos el m\u251c\u00aetodo a POST para el backend\nmsg.method = \"POST\";\n// 3. Pasamos el token de sesi\u251c\u2502n de la App al Backend\nmsg.headers = {\n    \"X-Session-Id\": msg.req.headers[\"x-session-id\"]\n};\nmsg.on('input', function (msg) {\n    if (msg.payload && msg.payload.inviteCode) {\n        msg.payload.code = msg.payload.inviteCode;\n    }\n    return msg;\n});\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 350,
+        "y": 300,
+        "wires": [
+            [
+                "059bd6c0830ea0dd",
+                "bb5c2d8826fbb6fc"
+            ]
+        ]
+    },
+    {
+        "id": "059bd6c0830ea0dd",
+        "type": "http request",
+        "z": "0fa7dbab6a6771ab",
+        "name": "Invite (Spring Boot) [POST]",
+        "method": "POST",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 580,
+        "y": 300,
+        "wires": [
+            [
+                "5b85157412a4d98a"
+            ]
+        ]
+    },
+    {
+        "id": "2f1e928174d303ab",
+        "type": "http in",
+        "z": "0fa7dbab6a6771ab",
+        "name": "Upload Endpoint",
+        "url": "/api/upload",
+        "method": "post",
+        "upload": true,
+        "swaggerDoc": "",
+        "x": 150,
+        "y": 400,
+        "wires": [
+            [
+                "1525e6f0177c7b9b"
+            ]
+        ]
+    },
+    {
+        "id": "1525e6f0177c7b9b",
+        "type": "http request",
+        "z": "0fa7dbab6a6771ab",
+        "name": "Upload (Spring Boot)",
+        "method": "POST",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://localhost:8080/api/upload",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "",
+        "x": 400,
+        "y": 400,
+        "wires": [
+            [
+                "5b85157412a4d98a"
+            ]
+        ]
+    },
+    {
+        "id": "9f71a44c6ade979c",
+        "type": "http in",
+        "z": "0fa7dbab6a6771ab",
+        "name": "Recognize Endpoint",
+        "url": "/api/recognize",
+        "method": "post",
+        "upload": true,
+        "swaggerDoc": "",
+        "x": 150,
+        "y": 500,
+        "wires": [
+            [
+                "0af2b9f1b0a1f663"
+            ]
+        ]
+    },
+    {
+        "id": "0af2b9f1b0a1f663",
+        "type": "http request",
+        "z": "0fa7dbab6a6771ab",
+        "name": "Recognize (Spring Boot)",
+        "method": "POST",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://localhost:8080/api/recognize",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "",
+        "x": 400,
+        "y": 500,
+        "wires": [
+            [
+                "5b85157412a4d98a"
+            ]
+        ]
+    },
+    {
+        "id": "405cc2bea6dbf459",
+        "type": "http in",
+        "z": "0fa7dbab6a6771ab",
+        "name": "Create Group Endpoint",
+        "url": "/api/groups/create",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 150,
+        "y": 600,
+        "wires": [
+            [
+                "4c1e7cbca3a841a7"
+            ]
+        ]
+    },
+    {
+        "id": "679a171205ec0835",
+        "type": "http request",
+        "z": "0fa7dbab6a6771ab",
+        "name": "Create Group (Spring Boot)",
+        "method": "POST",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://localhost:8080/api/groups/create",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "",
+        "x": 400,
+        "y": 600,
+        "wires": [
+            [
+                "5b85157412a4d98a"
+            ]
+        ]
+    },
+    {
+        "id": "54030a4991f20019",
+        "type": "http in",
+        "z": "0fa7dbab6a6771ab",
+        "name": "Join Group Endpoint",
+        "url": "/api/groups/join",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 150,
+        "y": 700,
+        "wires": [
+            [
+                "81dda7ffb79a4625"
+            ]
+        ]
+    },
+    {
+        "id": "5262227983954ce9",
+        "type": "http request",
+        "z": "0fa7dbab6a6771ab",
+        "name": "Join Group (Spring Boot)",
+        "method": "POST",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://localhost:8080/api/groups/join",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "",
+        "x": 400,
+        "y": 700,
+        "wires": [
+            [
+                "5b85157412a4d98a"
+            ]
+        ]
+    },
+    {
+        "id": "fa943c52d7fdcdf2",
+        "type": "debug",
+        "z": "0fa7dbab6a6771ab",
+        "name": "EndpointDebug",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 300,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "bb5c2d8826fbb6fc",
+        "type": "debug",
+        "z": "0fa7dbab6a6771ab",
+        "name": "SetURLDebug",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 540,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "de81efab236d4461",
+        "type": "http in",
+        "z": "4f1c296af823412b",
+        "name": "Mobile Scan Endpoint",
+        "url": "/mobile/scan",
+        "method": "post",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 140,
+        "y": 100,
+        "wires": [
+            [
+                "0e366ad94f1787eb"
+            ]
+        ]
+    },
+    {
+        "id": "0e366ad94f1787eb",
+        "type": "json-schema",
+        "z": "4f1c296af823412b",
+        "name": "Validate Request",
+        "func": "{\n    \"type\": \"object\",\n        \"properties\": {\n        \"image\": {\n            \"type\": \"string\",\n                \"description\": \"Base64 encoded image string\"\n        },\n        \"token\": {\n            \"type\": \"string\",\n                \"description\": \"Authentication token\"\n        },\n        \"groupId\": {\n            \"type\": \"string\",\n                \"description\": \"ID of the family group\"\n        }\n    },\n    \"required\": [\n        \"image\",\n        \"token\"\n    ]\n}\n",
+        "x": 350,
+        "y": 100,
+        "wires": [
+            [
+                "5fdfbf7f9ef0d662"
+            ]
+        ]
+    },
+    {
+        "id": "5fdfbf7f9ef0d662",
+        "type": "http request",
+        "z": "4f1c296af823412b",
+        "name": "Identify Face (Spring Boot)",
+        "method": "POST",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://localhost:8080/api/faces/identify",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "",
+        "x": 600,
+        "y": 100,
+        "wires": [
+            [
+                "81512aab87204539",
+                "2b841042463b1070"
+            ]
+        ]
+    },
+    {
+        "id": "81512aab87204539",
+        "type": "switch",
+        "z": "4f1c296af823412b",
+        "name": "Face Identified?",
+        "property": "payload.personName",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "nnull"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 850,
+        "y": 100,
+        "wires": [
+            [
+                "cfdcb3393fb905aa"
+            ]
+        ]
+    },
+    {
+        "id": "cfdcb3393fb905aa",
+        "type": "telegram sender",
+        "z": "4f1c296af823412b",
+        "name": "Notify Family",
+        "bot": "telegram_bot_config",
+        "haserroroutput": false,
+        "outputs": 1,
+        "x": 1050,
+        "y": 100,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "2b841042463b1070",
+        "type": "http response",
+        "z": "4f1c296af823412b",
+        "name": "Return Context",
+        "statusCode": "200",
+        "headers": {},
+        "x": 1050,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "427255cffc287868",
+        "type": "http in",
+        "z": "4f1c296af823412b",
+        "name": "Login Endpoint",
+        "url": "/api/auth/login",
+        "method": "post",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 150,
+        "y": 200,
+        "wires": [
+            [
+                "4318bf79ded9b079"
+            ]
+        ]
+    },
+    {
+        "id": "4318bf79ded9b079",
+        "type": "http request",
+        "z": "4f1c296af823412b",
+        "name": "Login (Spring Boot)",
+        "method": "POST",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://localhost:8080/api/auth/login",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 400,
+        "y": 200,
+        "wires": [
+            [
+                "2b841042463b1070"
+            ]
+        ]
+    },
+    {
+        "id": "4d1a056e8149ff88",
+        "type": "http in",
+        "z": "4f1c296af823412b",
+        "name": "Invite Endpoint",
+        "url": "/api/groups/:id/invite",
+        "method": "get",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 100,
+        "y": 300,
+        "wires": [
+            [
+                "84c66cb82101c234",
+                "b412e661e347dd0f"
+            ]
+        ]
+    },
+    {
+        "id": "84c66cb82101c234",
+        "type": "function",
+        "z": "4f1c296af823412b",
+        "name": "Set URL & Headers",
+        "func": "// 1. Corregimos la URL del backend\nmsg.url = \"http://localhost:8080/garAItu/group/\" + msg.req.params.id + \"/invite\";\n\n// 2. Forzamos el m\u251c\u00aetodo a POST para el backend\nmsg.method = \"POST\";\n\n// 3. Pasamos el token de sesi\u251c\u2502n de la App al Backend\nmsg.headers = {\n    \"X-Session-Id\": msg.req.headers[\"x-session-id\"]\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 330,
+        "y": 300,
+        "wires": [
+            [
+                "0677bdd1ef1458d4",
+                "75f174562a51d734"
+            ]
+        ]
+    },
+    {
+        "id": "0677bdd1ef1458d4",
+        "type": "http request",
+        "z": "4f1c296af823412b",
+        "name": "Invite (Spring Boot)",
+        "method": "POST",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 550,
+        "y": 300,
+        "wires": [
+            [
+                "c57ef852614b8216"
+            ]
+        ]
+    },
+    {
+        "id": "c57ef852614b8216",
+        "type": "function",
+        "z": "4f1c296af823412b",
+        "name": "Map Invite Code",
+        "func": "// Convertimos 'inviteCode' del servidor a 'code' para la App\nif (msg.payload && msg.payload.inviteCode) {\n    msg.payload.code = msg.payload.inviteCode;\n}\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 780,
+        "y": 300,
+        "wires": [
+            [
+                "2b841042463b1070"
+            ]
+        ]
+    },
+    {
+        "id": "159d72e5a6ba7e9e",
+        "type": "http in",
+        "z": "4f1c296af823412b",
+        "name": "Upload Endpoint",
+        "url": "/api/upload",
+        "method": "post",
+        "upload": true,
+        "swaggerDoc": "",
+        "x": 150,
+        "y": 400,
+        "wires": [
+            [
+                "b78893e663d515b7"
+            ]
+        ]
+    },
+    {
+        "id": "b78893e663d515b7",
+        "type": "http request",
+        "z": "4f1c296af823412b",
+        "name": "Upload (Spring Boot)",
+        "method": "POST",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://localhost:8080/api/upload",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "",
+        "x": 400,
+        "y": 400,
+        "wires": [
+            [
+                "2b841042463b1070"
+            ]
+        ]
+    },
+    {
+        "id": "4ec325b462edb3c6",
+        "type": "http in",
+        "z": "4f1c296af823412b",
+        "name": "Recognize Endpoint",
+        "url": "/api/recognize",
+        "method": "post",
+        "upload": true,
+        "swaggerDoc": "",
+        "x": 150,
+        "y": 500,
+        "wires": [
+            [
+                "4c79047f11ab1cc3"
+            ]
+        ]
+    },
+    {
+        "id": "4c79047f11ab1cc3",
+        "type": "http request",
+        "z": "4f1c296af823412b",
+        "name": "Recognize (Spring Boot)",
+        "method": "POST",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://localhost:8080/api/recognize",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "",
+        "x": 400,
+        "y": 500,
+        "wires": [
+            [
+                "2b841042463b1070"
+            ]
+        ]
+    },
+    {
+        "id": "cd32537f18abf4d0",
+        "type": "http in",
+        "z": "4f1c296af823412b",
+        "name": "Create Group Endpoint",
+        "url": "/api/groups/create",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 150,
+        "y": 600,
+        "wires": [
+            [
+                "5916e4c69f17452d"
+            ]
+        ]
+    },
+    {
+        "id": "e460e1d4e5d1cf0c",
+        "type": "http request",
+        "z": "4f1c296af823412b",
+        "name": "Create Group (Spring Boot)",
+        "method": "POST",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://localhost:8080/api/groups/create",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "",
+        "x": 400,
+        "y": 600,
+        "wires": [
+            [
+                "2b841042463b1070"
+            ]
+        ]
+    },
+    {
+        "id": "36b9a42186df3bf0",
+        "type": "http in",
+        "z": "4f1c296af823412b",
+        "name": "Join Group Endpoint",
+        "url": "/api/groups/join",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 150,
+        "y": 700,
+        "wires": [
+            [
+                "24c3e5fbb7944d2a"
+            ]
+        ]
+    },
+    {
+        "id": "759cd7c6ebec210c",
+        "type": "http request",
+        "z": "4f1c296af823412b",
+        "name": "Join Group (Spring Boot)",
+        "method": "POST",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://localhost:8080/api/groups/join",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "",
+        "x": 400,
+        "y": 700,
+        "wires": [
+            [
+                "2b841042463b1070"
+            ]
+        ]
+    },
+    {
+        "id": "b412e661e347dd0f",
+        "type": "debug",
+        "z": "4f1c296af823412b",
+        "name": "EndpointDebug",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 300,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "75f174562a51d734",
+        "type": "debug",
+        "z": "4f1c296af823412b",
+        "name": "SetURLDebug",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 540,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "4c1e7cbca3a841a7",
+        "type": "function",
+        "z": "0fa7dbab6a6771ab",
+        "name": "Add Headers (Create)",
+        "func": "msg.headers = {\n    \"X-Session-Id\": msg.req.headers[\"x-session-id\"],\n    \"Content-Type\": \"application/json\"\n};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 275.0,
+        "y": 600.0,
+        "wires": [
+            [
+                "679a171205ec0835"
+            ]
+        ]
+    },
+    {
+        "id": "81dda7ffb79a4625",
+        "type": "function",
+        "z": "0fa7dbab6a6771ab",
+        "name": "Add Headers (Join)",
+        "func": "msg.headers = {\n    \"X-Session-Id\": msg.req.headers[\"x-session-id\"],\n    \"Content-Type\": \"application/json\"\n};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 275.0,
+        "y": 700.0,
+        "wires": [
+            [
+                "5262227983954ce9"
+            ]
+        ]
+    },
+    {
+        "id": "5916e4c69f17452d",
+        "type": "function",
+        "z": "4f1c296af823412b",
+        "name": "Add Headers (Create)",
+        "func": "msg.headers = {\n    \"X-Session-Id\": msg.req.headers[\"x-session-id\"],\n    \"Content-Type\": \"application/json\"\n};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 275.0,
+        "y": 600.0,
+        "wires": [
+            [
+                "e460e1d4e5d1cf0c"
+            ]
+        ]
+    },
+    {
+        "id": "24c3e5fbb7944d2a",
+        "type": "function",
+        "z": "4f1c296af823412b",
+        "name": "Add Headers (Join)",
+        "func": "msg.headers = {\n    \"X-Session-Id\": msg.req.headers[\"x-session-id\"],\n    \"Content-Type\": \"application/json\"\n};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 275.0,
+        "y": 700.0,
+        "wires": [
+            [
+                "759cd7c6ebec210c"
+            ]
+        ]
+    }
+]

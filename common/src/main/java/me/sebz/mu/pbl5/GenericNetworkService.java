@@ -109,6 +109,46 @@ public class GenericNetworkService {
 
     /*
      * ==========================
+     * PUT
+     * ==========================
+     */
+    public void put(String endpoint, Map<String, Object> data, NetworkCallback callback) {
+        ConnectionRequest req = new ConnectionRequest();
+        req.setUrl(BASE_URL + endpoint);
+        req.setHttpMethod("PUT");
+
+        req.setContentType("application/json");
+        req.addRequestHeader("Accept", "application/json");
+
+        String token = MemoryLens.getSessionToken();
+        if (token != null) {
+            req.addRequestHeader("X-Session-Id", token);
+        }
+
+        // JSON body
+        String jsonBody = me.sebz.mu.pbl5.utils.JsonUtil.buildJson(data);
+        req.setRequestBody(jsonBody);
+        req.setWriteRequest(true); // Force body write
+
+        req.addResponseListener(evt -> {
+            int code = req.getResponseCode();
+            if (code == 200 || code == 201 || code == 204) {
+                if (req.getResponseData() != null && req.getResponseData().length > 0) {
+                    parseResponse(req.getResponseData(), callback);
+                } else {
+                    callback.onSuccess(new java.util.HashMap<>());
+                }
+            } else {
+                callback.onFailure("Server Error: " + code);
+            }
+        });
+
+        req.addExceptionListener(evt -> callback.onFailure("Connection failed. Is Node-RED running?"));
+        NetworkManager.getInstance().addToQueue(req);
+    }
+
+    /*
+     * ==========================
      * UPLOAD (MULTIPART)
      * ==========================
      */

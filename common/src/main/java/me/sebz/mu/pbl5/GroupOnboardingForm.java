@@ -60,19 +60,27 @@ public class GroupOnboardingForm extends Form {
                     });
         });
 
-        // For caregivers/admins, allow creating a group
-        Button createButton = new Button("Create New Family Group");
-        createButton.setUIID("ButtonSecondary");
-        createButton.setMaterialIcon(FontImage.MATERIAL_ADD_CIRCLE, 5);
-        createButton.addActionListener(e -> showCreateGroupDialog());
-
         center.add(title);
         center.add(info);
         center.add(new Label("Invite Code:"));
         center.add(inviteCodeField);
         center.add(joinButton);
-        center.add(new Label("--- OR ---"));
-        center.add(createButton);
+
+        // For caregivers/admins, allow creating a group
+        String role = MemoryLens.getUserRole();
+        // Allow if role is 0 (Admin) or explicit ADMIN string.
+        // Handle "0.0" as seen in previous issues.
+        boolean isAdmin = "0".equals(role) || "0.0".equals(role) || "ADMIN".equalsIgnoreCase(role);
+
+        if (isAdmin) {
+            Button createButton = new Button("Create New Family Group");
+            createButton.setUIID("ButtonSecondary");
+            createButton.setMaterialIcon(FontImage.MATERIAL_ADD_CIRCLE, 5);
+            createButton.addActionListener(e -> showCreateGroupDialog());
+
+            center.add(new Label("--- OR ---"));
+            center.add(createButton);
+        }
 
         this.add(BorderLayout.CENTER, center);
     }

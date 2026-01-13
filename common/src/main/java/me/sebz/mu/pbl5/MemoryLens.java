@@ -18,6 +18,15 @@ public class MemoryLens extends Lifecycle {
     private static Long memberId;
     private static Long familyGroupId;
     private static String userRole;
+    private static boolean hasEmbedding; // New field
+
+    public static boolean hasEmbedding() {
+        return hasEmbedding;
+    }
+
+    public static void setHasEmbedding(boolean value) {
+        hasEmbedding = value;
+    }
 
     public static String getSessionToken() {
         return sessionToken;
@@ -132,6 +141,7 @@ public class MemoryLens extends Lifecycle {
                     new GenericNetworkService.NetworkCallback() {
                         @Override
                         public void onSuccess(java.util.Map<String, Object> response) {
+                            System.out.println("DEBUG: Login Response: " + response); // LOG ADDED
                             String roleShort = String.valueOf(response.get("role"));
                             String token = (String) response.get("session");
                             Object fgIdObj = response.get("familyGroupId");
@@ -140,10 +150,21 @@ public class MemoryLens extends Lifecycle {
                             Object mIdObj = response.get("memberId");
                             Long mId = (mIdObj instanceof Number) ? ((Number) mIdObj).longValue() : null;
 
+                            // Extract hasEmbedding
+                            boolean hasEmb = false;
+                            if (response.containsKey("hasEmbedding")) {
+                                Object urObj = response.get("hasEmbedding");
+                                if (urObj instanceof Boolean)
+                                    hasEmb = (Boolean) urObj;
+                                else if (urObj instanceof String)
+                                    hasEmb = Boolean.parseBoolean((String) urObj);
+                            }
+
                             MemoryLens.setSessionToken(token);
                             MemoryLens.setFamilyGroupId(fgId);
                             MemoryLens.setMemberId(mId);
                             MemoryLens.setUserRole(roleShort);
+                            MemoryLens.setHasEmbedding(hasEmb); // Set it
 
                             MemoryLens.navigateToAppropriateDashboard();
                         }

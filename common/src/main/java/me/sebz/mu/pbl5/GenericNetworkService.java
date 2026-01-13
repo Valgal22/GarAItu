@@ -58,7 +58,7 @@ public class GenericNetworkService {
             if (code == 200 || code == 201) {
                 parseResponse(req.getResponseData(), callback);
             } else {
-                callback.onFailure("Server Error: " + code);
+                handleErrorResponse(req, callback);
             }
         });
 
@@ -98,7 +98,7 @@ public class GenericNetworkService {
             if (code == 200 || code == 201) {
                 parseResponse(req.getResponseData(), callback);
             } else {
-                callback.onFailure("Server Error: " + code);
+                handleErrorResponse(req, callback);
             }
         });
 
@@ -139,7 +139,7 @@ public class GenericNetworkService {
                     callback.onSuccess(new java.util.HashMap<>());
                 }
             } else {
-                callback.onFailure("Server Error: " + code);
+                handleErrorResponse(req, callback);
             }
         });
 
@@ -184,7 +184,7 @@ public class GenericNetworkService {
             if (code == 200 || code == 201) {
                 parseResponse(req.getResponseData(), callback);
             } else {
-                callback.onFailure("Server Error: " + code);
+                handleErrorResponse(req, callback);
             }
         });
 
@@ -228,21 +228,43 @@ public class GenericNetworkService {
 
         req.addResponseListener(evt -> {
             int code = req.getResponseCode();
-            if (code == 200 || code == 204) {
-                // DELETE might return empty body or 204 No Content
+            if (code == 200 || code == 201 || code == 204) {
                 if (req.getResponseData() != null && req.getResponseData().length > 0) {
                     parseResponse(req.getResponseData(), callback);
                 } else {
-                    // Success but empty
                     callback.onSuccess(new java.util.HashMap<>());
                 }
             } else {
-                callback.onFailure("Server Error: " + code);
+                handleErrorResponse(req, callback);
             }
         });
 
         req.addExceptionListener(evt -> callback.onFailure("Connection failed. Is Node-RED running?"));
 
         NetworkManager.getInstance().addToQueue(req);
+    }
+
+    // Helper to parse error message from JSON body if available
+    private void handleErrorResponse(ConnectionRequest req, NetworkCallback callback) {
+        int code = req.getResponseCode();
+        byte[] data = req.getResponseData();
+        String errorMsg = "Server Error: " + code;
+
+        if (data != null && data.length > 0) {
+            try {
+                JSONParser parser = new JSONParser();
+                Map<String, Object> result = parser.parseJSON(
+                        new InputStreamReader(new ByteArrayInputStream(data), "UTF-8"));
+
+                if (result.containsKey("message")) {
+                    errorMsg = (String) result.get("message");
+                } else if (result.containsKey("error")) {
+                    errorMsg = (String) result.get("error");
+                }
+            } catch (Exception e) {
+                // Ignore parsing error, fallback to default message
+            }
+        }
+        callback.onFailure(errorMsg);
     }
 }

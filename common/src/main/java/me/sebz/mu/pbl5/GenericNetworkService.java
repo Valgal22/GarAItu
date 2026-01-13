@@ -168,4 +168,41 @@ public class GenericNetworkService {
             callback.onFailure("JSON parse error: " + e.getMessage());
         }
     }
+
+    /*
+     * ==========================
+     * DELETE
+     * ==========================
+     */
+    public void delete(String endpoint, NetworkCallback callback) {
+        ConnectionRequest req = new ConnectionRequest();
+        req.setUrl(BASE_URL + endpoint);
+        req.setHttpMethod("DELETE");
+
+        req.addRequestHeader("Accept", "application/json");
+
+        String token = MemoryLens.getSessionToken();
+        if (token != null) {
+            req.addRequestHeader("X-Session-Id", token);
+        }
+
+        req.addResponseListener(evt -> {
+            int code = req.getResponseCode();
+            if (code == 200 || code == 204) {
+                // DELETE might return empty body or 204 No Content
+                if (req.getResponseData() != null && req.getResponseData().length > 0) {
+                    parseResponse(req.getResponseData(), callback);
+                } else {
+                    // Success but empty
+                    callback.onSuccess(new java.util.HashMap<>());
+                }
+            } else {
+                callback.onFailure("Server Error: " + code);
+            }
+        });
+
+        req.addExceptionListener(evt -> callback.onFailure("Connection failed. Is Node-RED running?"));
+
+        NetworkManager.getInstance().addToQueue(req);
+    }
 }

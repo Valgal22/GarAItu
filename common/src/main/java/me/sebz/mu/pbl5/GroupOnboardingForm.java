@@ -2,13 +2,20 @@ package me.sebz.mu.pbl5;
 
 import com.codename1.ui.*;
 import com.codename1.ui.layouts.*;
-import java.util.HashMap;
-import java.util.Map;
+import me.sebz.mu.pbl5.logic.RoleUtil;
+import me.sebz.mu.pbl5.services.GroupService;
 
 public class GroupOnboardingForm extends Form {
 
+    private final GroupService groupService;
+
     public GroupOnboardingForm() {
+        this(new GroupService(GenericNetworkService.getInstance()));
+    }
+
+    public GroupOnboardingForm(GroupService groupService) {
         super("Welcome", new BorderLayout());
+        this.groupService = groupService;
 
         Container center = new Container(BoxLayout.y());
         center.setScrollableY(true);
@@ -22,42 +29,30 @@ public class GroupOnboardingForm extends Form {
 
         TextField inviteCodeField = new TextField("", "Invite Code", 20, TextField.ANY);
         inviteCodeField.setUIID("TextField");
+        inviteCodeField.setName("group_invite");
 
         Button joinButton = new Button("Join with Code");
         joinButton.setMaterialIcon(FontImage.MATERIAL_GROUP_ADD, 5);
+        joinButton.setName("group_join");
 
         joinButton.addActionListener(e -> {
             String code = inviteCodeField.getText();
-            if (code.isEmpty()) {
-                Dialog.show("Error", "Please enter an invite code", "OK", null);
-                return;
-            }
 
-            Map<String, Object> data = new HashMap<>();
-            data.put("inviteCode", code);
-
-            GenericNetworkService.getInstance().post("/api/groups/join", data,
-                    new GenericNetworkService.NetworkCallback() {
-                        @Override
-                        public void onSuccess(Map<String, Object> response) {
-                            // After joining, we might need to refresh user data or just go to dashboard
-                            Object fgIdObj = response.get("familyGroupId");
-                            Long fgId = (fgIdObj instanceof Number) ? ((Number) fgIdObj).longValue() : null;
-                            MemoryLens.setFamilyGroupId(fgId);
-
-                            Display.getInstance().callSerially(() -> {
-                                Dialog.show("Success", "You have joined the group!", "OK", null);
-                                navigateToDashboard();
-                            });
-                        }
-
-                        @Override
-                        public void onFailure(String errorMessage) {
-                            Display.getInstance().callSerially(() -> {
-                                Dialog.show("Error", "Could not join: " + errorMessage, "OK", null);
-                            });
-                        }
+            groupService.joinWithCode(code, new GroupService.JoinCallback() {
+                @Override
+                public void onSuccess(Long familyGroupId) {
+                    MemoryLens.setFamilyGroupId(familyGroupId);
+                    Display.getInstance().callSerially(() -> {
+                        Dialog.show("Success", "You have joined the group!", "OK", null);
+                        MemoryLens.navigateToAppropriateDashboard();
                     });
+                }
+
+                @Override
+                public void onFailure(String error) {
+                    Display.getInstance().callSerially(() -> Dialog.show("Error", "Could not join: " + error, "OK", null));
+                }
+            });
         });
 
         center.add(title);
@@ -66,16 +61,11 @@ public class GroupOnboardingForm extends Form {
         center.add(inviteCodeField);
         center.add(joinButton);
 
-        // For caregivers/admins, allow creating a group
-        String role = MemoryLens.getUserRole();
-        // Allow if role is 0 (Admin) or explicit ADMIN string.
-        // Handle "0.0" as seen in previous issues.
-        boolean isAdmin = "0".equals(role) || "0.0".equals(role) || "ADMIN".equalsIgnoreCase(role);
-
-        if (isAdmin) {
+        if (RoleUtil.isAdmin(MemoryLens.getUserRole())) {
             Button createButton = new Button("Create New Family Group");
             createButton.setUIID("ButtonSecondary");
             createButton.setMaterialIcon(FontImage.MATERIAL_ADD_CIRCLE, 5);
+            createButton.setName("group_create_open");
             createButton.addActionListener(e -> showCreateGroupDialog());
 
             center.add(new Label("--- OR ---"));
@@ -89,41 +79,27 @@ public class GroupOnboardingForm extends Form {
         TextField groupNameField = new TextField("", "Group Name (e.g. Smith Family)", 20, TextField.ANY);
         Command ok = new Command("Create");
         Command cancel = new Command("Cancel");
+
         if (Dialog.show("Create Group", groupNameField, ok, cancel) == ok) {
             String name = groupNameField.getText();
-            if (name.isEmpty())
-                return;
 
-            Map<String, Object> data = new HashMap<>();
-            data.put("name", name);
+            groupService.createGroup(name, new GroupService.CreateCallback() {
+                @Override
+                public void onSuccess(Long fgId) {
+                    MemoryLens.setFamilyGroupId(fgId);
+                    MemoryLens.setUserRole("0");
 
-            GenericNetworkService.getInstance().post("/api/groups/create", data,
-                    new GenericNetworkService.NetworkCallback() {
-                        @Override
-                        public void onSuccess(Map<String, Object> response) {
-                            Object fgIdObj = response.get("id");
-                            Long fgId = (fgIdObj instanceof Number) ? ((Number) fgIdObj).longValue() : null;
-                            MemoryLens.setFamilyGroupId(fgId);
-                            // Set role to ADMIN (0) since creator is admin
-                            MemoryLens.setUserRole("0");
-
-                            Display.getInstance().callSerially(() -> {
-                                Dialog.show("Success", "Group created successfully!", "OK", null);
-                                navigateToDashboard();
-                            });
-                        }
-
-                        @Override
-                        public void onFailure(String errorMessage) {
-                            Display.getInstance().callSerially(() -> {
-                                Dialog.show("Error", "Creation failed: " + errorMessage, "OK", null);
-                            });
-                        }
+                    Display.getInstance().callSerially(() -> {
+                        Dialog.show("Success", "Group created successfully!", "OK", null);
+                        MemoryLens.navigateToAppropriateDashboard();
                     });
-        }
-    }
+                }
 
-    private void navigateToDashboard() {
-        MemoryLens.navigateToAppropriateDashboard();
+                @Override
+                public void onFailure(String error) {
+                    Display.getInstance().callSerially(() -> Dialog.show("Error", "Creation failed: " + error, "OK", null));
+                }
+            });
+        }
     }
 }

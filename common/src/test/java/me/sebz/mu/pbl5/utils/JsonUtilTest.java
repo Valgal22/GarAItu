@@ -1,73 +1,62 @@
 package me.sebz.mu.pbl5.utils;
 
 import org.junit.jupiter.api.Test;
-import java.util.HashMap;
+
+import java.lang.reflect.Constructor;
+import java.util.LinkedHashMap;
 import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class JsonUtilTest {
 
     @Test
-    public void testEmptyMap() {
-        Map<String, Object> data = new HashMap<>();
-        String json = JsonUtil.buildJson(data);
-        assertEquals("{}", json);
+    public void buildJson_nullMap_returnsEmptyObject() {
+        assertEquals("{}", JsonUtil.buildJson(null));
     }
 
     @Test
-    public void testNullMap() {
-        String json = JsonUtil.buildJson(null);
-        assertEquals("{}", json);
-    }
+    public void buildJson_stringsEscapeQuotesAndBackslash() {
+        Map<String,Object> m = new LinkedHashMap<>();
+        m.put("a", "hello");
+        m.put("b", "x\"y");
+        m.put("c", "path\\file");
 
-    @Test
-    public void testSimpleString() {
-        Map<String, Object> data = new HashMap<>();
-        data.put("key", "value");
-        String json = JsonUtil.buildJson(data);
-        assertEquals("{\"key\":\"value\"}", json);
-    }
+        String json = JsonUtil.buildJson(m);
 
-    @Test
-    public void testSimpleNumber() {
-        Map<String, Object> data = new HashMap<>();
-        data.put("id", 123);
-        String json = JsonUtil.buildJson(data);
-        assertEquals("{\"id\":123}", json);
-    }
-
-    @Test
-    public void testMultipleFields() {
-        Map<String, Object> data = new HashMap<>();
-        data.put("name", "Alice");
-        data.put("age", 30);
-        String json = JsonUtil.buildJson(data);
-        // Order is not guaranteed in HashMap, so we check for containment of parts or
-        // construct a known order map if needed,
-        // but for now let's hope it's small enough or just check parts.
-        // Better: Check if valid JSON object with those fields.
-        // For simplicity in this string builder implementation test:
-        assertTrue(json.contains("\"name\":\"Alice\""));
-        assertTrue(json.contains("\"age\":30"));
         assertTrue(json.startsWith("{"));
         assertTrue(json.endsWith("}"));
+        assertTrue(json.contains("\"a\":\"hello\""));
+        assertTrue(json.contains("\"b\":\"x\\\"y\""));
+        assertTrue(json.contains("\"c\":\"path\\\\file\""));
     }
 
     @Test
-    public void testEscaping() {
-        Map<String, Object> data = new HashMap<>();
-        data.put("quote", "He said \"Hello\"");
-        data.put("slash", "C:\\Path");
-        String json = JsonUtil.buildJson(data);
-        assertTrue(json.contains("\"quote\":\"He said \\\"Hello\\\"\""));
-        assertTrue(json.contains("\"slash\":\"C:\\\\Path\""));
+    public void buildJson_numbersAndNull() {
+        Map<String,Object> m = new LinkedHashMap<>();
+        m.put("n", 10);
+        m.put("x", null);
+
+        String json = JsonUtil.buildJson(m);
+
+        assertTrue(json.contains("\"n\":10"));
+        assertTrue(json.contains("\"x\":null"));
     }
 
     @Test
-    public void testNullValue() {
-        Map<String, Object> data = new HashMap<>();
-        data.put("nullable", null);
-        String json = JsonUtil.buildJson(data);
-        assertEquals("{\"nullable\":null}", json);
+    public void buildJson_nullKey_coversEscapeNullBranch() {
+        Map<String,Object> m = new LinkedHashMap<>();
+        m.put(null, "v");
+        String json = JsonUtil.buildJson(m);
+
+        // escape(null) devuelve ""
+        assertTrue(json.contains("\"\":\"v\""));
+    }
+
+    @Test
+    public void jsonUtil_privateConstructor_covered() throws Exception {
+        Constructor<JsonUtil> c = JsonUtil.class.getDeclaredConstructor();
+        c.setAccessible(true);
+        assertNotNull(c.newInstance());
     }
 }

@@ -2,13 +2,20 @@ package me.sebz.mu.pbl5;
 
 import com.codename1.ui.*;
 import com.codename1.ui.layouts.*;
-import java.util.HashMap;
-import java.util.Map;
+import me.sebz.mu.pbl5.services.AuthService;
 
 public class RegistrationForm extends Form {
 
+    private final AuthService authService;
+
     public RegistrationForm() {
+        this(new AuthService(GenericNetworkService.getInstance()));
+    }
+
+    // Para tests puedes inyectar un AuthService fake
+    public RegistrationForm(AuthService authService) {
         super("Register", new BorderLayout());
+        this.authService = authService;
 
         Container center = new Container(BoxLayout.y());
         center.setScrollableY(true);
@@ -20,64 +27,55 @@ public class RegistrationForm extends Form {
 
         TextField nameField = new TextField("", "Full Name", 20, TextField.ANY);
         nameField.setUIID("TextField");
+        nameField.setName("reg_name");
 
         TextField emailField = new TextField("", "Email", 20, TextField.EMAILADDR);
         emailField.setUIID("TextField");
+        emailField.setName("reg_email");
 
         TextField passwordField = new TextField("", "Password", 20, TextField.PASSWORD);
         passwordField.setUIID("TextField");
+        passwordField.setName("reg_password");
 
         String[] roles = { "Caregiver (Admin)", "Patient", "Family Member" };
         ComboBox<String> rolePicker = new ComboBox<>((Object[]) roles);
         rolePicker.setUIID("TextField");
+        rolePicker.setName("reg_role");
 
         TextField contextField = new TextField("", "Context (e.g. Who are you?)", 20, TextField.ANY);
         contextField.setUIID("TextField");
+        contextField.setName("reg_context");
 
         Button registerButton = new Button("Register");
         registerButton.setMaterialIcon(FontImage.MATERIAL_PERSON_ADD, 5);
+        registerButton.setName("reg_submit");
 
         registerButton.addActionListener(e -> {
             String name = nameField.getText();
             String email = emailField.getText();
             String password = passwordField.getText();
             String context = contextField.getText();
-            int roleIdx = rolePicker.getSelectedIndex();
-            short role = (short) roleIdx;
+            short role = (short) rolePicker.getSelectedIndex();
 
-            if (name.isEmpty() || email.isEmpty() || password.isEmpty()) {
-                Dialog.show("Error", "Name, Email and Password are required", "OK", null);
-                return;
-            }
-
-            Map<String, Object> regData = new HashMap<>();
-            regData.put("name", name);
-            regData.put("email", email);
-            regData.put("password", password);
-            regData.put("context", context);
-            regData.put("role", role);
-
-            GenericNetworkService.getInstance().post("/api/auth/register", regData,
-                    new GenericNetworkService.NetworkCallback() {
-                        @Override
-                        public void onSuccess(Map<String, Object> response) {
-                            Display.getInstance().callSerially(() -> {
-                                Dialog.show("Success", "Account created! Please login to join a group.", "OK", null);
-                                MemoryLens.showLoginScreen();
-                            });
-                        }
-
-                        @Override
-                        public void onFailure(String errorMessage) {
-                            Display.getInstance().callSerially(() -> {
-                                Dialog.show("Error", "Registration failed: " + errorMessage, "OK", null);
-                            });
-                        }
+            authService.register(name, email, password, context, role, new AuthService.SimpleCallback() {
+                @Override
+                public void onSuccess() {
+                    Display.getInstance().callSerially(() -> {
+                        Dialog.show("Success", "Account created! Please login to join a group.", "OK", null);
+                        MemoryLens.showLoginScreen();
                     });
+                }
+
+                @Override
+                public void onFailure(String error) {
+                    Display.getInstance().callSerially(() -> Dialog.show("Error", "Registration failed: " + error, "OK", null));
+                }
+            });
         });
 
         Button backButton = new Button("Back to Login");
         backButton.setUIID("ButtonSecondary");
+        backButton.setName("reg_back");
         backButton.addActionListener(e -> MemoryLens.showLoginScreen());
 
         center.add(title);

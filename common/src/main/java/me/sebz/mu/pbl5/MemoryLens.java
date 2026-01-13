@@ -14,6 +14,66 @@ import com.codename1.ui.util.Resources;
  * of building native mobile applications using Java.
  */
 public class MemoryLens extends Lifecycle {
+    private static String sessionToken;
+    private static Long memberId;
+    private static Long familyGroupId;
+    private static String userRole;
+
+    public static String getSessionToken() {
+        return sessionToken;
+    }
+
+    public static void setSessionToken(String token) {
+        sessionToken = token;
+    }
+
+    public static Long getMemberId() {
+        return memberId;
+    }
+
+    public static void setMemberId(Long id) {
+        memberId = id;
+    }
+
+    public static Long getFamilyGroupId() {
+        return familyGroupId;
+    }
+
+    public static void setFamilyGroupId(Long id) {
+        familyGroupId = id;
+    }
+
+    public static String getUserRole() {
+        return userRole;
+    }
+
+    public static void setUserRole(String role) {
+        userRole = role;
+    }
+
+    public static void navigateToAppropriateDashboard() {
+        Display.getInstance().callSerially(() -> {
+            if (familyGroupId == null) {
+                new GroupOnboardingForm().show();
+                return;
+            }
+
+            String roleShort = userRole;
+            if (roleShort == null)
+                roleShort = "2"; // Default fallback
+            // Handle "0.0" or "0"
+            if (roleShort.startsWith("0") || "ADMIN".equalsIgnoreCase(roleShort)) {
+                new AdminDashboard().show();
+            } else if (roleShort.startsWith("1") || "PATIENT".equalsIgnoreCase(roleShort)) {
+                new PatientDashboard().show();
+            } else {
+                // Default fallback to Family Dashboard for "2" or anything else unknown (safe
+                // fail)
+                new FamilyDashboard().show();
+            }
+        });
+    }
+
     @Override
     public void runApp() {
         showLoginScreen();
@@ -44,6 +104,11 @@ public class MemoryLens extends Lifecycle {
         Button loginButton = new Button("Login");
         loginButton.setMaterialIcon(FontImage.MATERIAL_LOGIN, 5);
 
+        Button registerButton = new Button("Register");
+        registerButton.setUIID("ButtonSecondary");
+        registerButton.setMaterialIcon(FontImage.MATERIAL_PERSON_ADD, 5);
+        registerButton.addActionListener(e -> new RegistrationForm().show());
+
         loginButton.addActionListener(e -> {
             String email = emailField.getText();
             String password = passwordField.getText();
@@ -53,21 +118,12 @@ public class MemoryLens extends Lifecycle {
                 return;
             }
 
-            // [DEV] Bypass for testing without Node-RED
-            if (email.equalsIgnoreCase("admin")) {
-                new AdminDashboard().show();
-                return;
-            }
-            if (email.equalsIgnoreCase("family")) {
-                new FamilyDashboard().show();
-                return;
-            }
-            if (email.equalsIgnoreCase("patient")) {
-                new PatientDashboard().show();
+            if (!email.contains("@") || !email.contains(".")) {
+                Dialog.show("Invalid Email", "Please enter a valid email address", "OK", null);
                 return;
             }
 
-            // Simulate Login API Call
+            // Real Login API Call via Node-RED
             java.util.Map<String, Object> loginData = new java.util.HashMap<>();
             loginData.put("email", email);
             loginData.put("password", password);
@@ -76,21 +132,20 @@ public class MemoryLens extends Lifecycle {
                     new GenericNetworkService.NetworkCallback() {
                         @Override
                         public void onSuccess(java.util.Map<String, Object> response) {
-                            String role = (String) response.get("role");
-                            // String token = (String) response.get("token");
-                            // Save token to Storage in real app
+                            String roleShort = String.valueOf(response.get("role"));
+                            String token = (String) response.get("session");
+                            Object fgIdObj = response.get("familyGroupId");
+                            Long fgId = (fgIdObj instanceof Number) ? ((Number) fgIdObj).longValue() : null;
 
-                            Display.getInstance().callSerially(() -> {
-                                if ("ADMIN".equalsIgnoreCase(role)) {
-                                    new AdminDashboard().show();
-                                } else if ("FAMILY".equalsIgnoreCase(role)) {
-                                    new FamilyDashboard().show();
-                                } else if ("PATIENT".equalsIgnoreCase(role)) {
-                                    new PatientDashboard().show();
-                                } else {
-                                    Dialog.show("Error", "Unknown Role: " + role, "OK", null);
-                                }
-                            });
+                            Object mIdObj = response.get("memberId");
+                            Long mId = (mIdObj instanceof Number) ? ((Number) mIdObj).longValue() : null;
+
+                            MemoryLens.setSessionToken(token);
+                            MemoryLens.setFamilyGroupId(fgId);
+                            MemoryLens.setMemberId(mId);
+                            MemoryLens.setUserRole(roleShort);
+
+                            MemoryLens.navigateToAppropriateDashboard();
                         }
 
                         @Override
@@ -107,6 +162,7 @@ public class MemoryLens extends Lifecycle {
         center.add(emailField);
         center.add(passwordField);
         center.add(loginButton);
+        center.add(registerButton);
 
         loginForm.add(BorderLayout.CENTER, center);
         loginForm.show();

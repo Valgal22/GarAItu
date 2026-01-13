@@ -44,8 +44,14 @@ public class PatientDashboard extends Form {
 
         this.add(BorderLayout.CENTER, scanFaceButton);
 
+        Button uploadImageButton = new Button("Upload Image DEBUG");
+        uploadImageButton.setUIID("ButtonSecondary");
+        uploadImageButton.setMaterialIcon(FontImage.MATERIAL_CLOUD_UPLOAD, 7);
+        uploadImageButton.addActionListener(e -> uploadImage());
+
         Container bottomContainer = new Container(new BorderLayout());
         bottomContainer.add(BorderLayout.CENTER, voiceQueryButton);
+        bottomContainer.add(BorderLayout.NORTH, uploadImageButton); // Added Upload Button
 
         Button logoutButton = new Button("Logout");
         logoutButton.setUIID("ButtonSecondary");
@@ -59,20 +65,41 @@ public class PatientDashboard extends Form {
         String filePath = Capture.capturePhoto(1024, -1);
         if (filePath != null) {
             ToastBar.showInfoMessage("Analyzing...");
-            GenericNetworkService.getInstance().upload("/api/recognize", filePath, new HashMap<>(),
+            Long groupId = MemoryLens.getFamilyGroupId();
+            GenericNetworkService.getInstance().upload("/api/recognize", filePath,
+                    new HashMap<>(),
                     new GenericNetworkService.NetworkCallback() {
                         @Override
                         public void onSuccess(Map<String, Object> response) {
-                            String name = (String) response.get("name");
-                            String relationship = (String) response.get("relationship");
-                            String message = "This is " + name + ", your " + relationship;
+                            System.out.println("scanFace Response: " + response); // LOGGING ADDED
 
+                            // The parser returns 'root' if it's a JSON array
+                            java.util.List<Map<String, Object>> list = (java.util.List<Map<String, Object>>) response
+                                    .get("root");
+                            String name = "Desconocido";
+                            String message = "Result: " + name;
+
+                            if (list != null && !list.isEmpty()) {
+                                Map<String, Object> top = list.get(0);
+                                if (top != null) {
+                                    Double score = (Double) top.get("similarity");
+                                    System.out.println("Top score: " + score); // LOG SCORE
+                                    if (score != null && score > 0.4) {
+                                        name = (String) top.get("name");
+                                        String context = (String) top.get("context");
+                                        if (context != null && !context.isEmpty()) {
+                                            message = "This is " + name + " (" + context + ")";
+                                        } else {
+                                            message = "This is " + name;
+                                        }
+                                    }
+                                }
+                            }
+
+                            final String resultMsg = message;
                             Display.getInstance().callSerially(() -> {
-                                Dialog.show("Result", message, "OK", null);
+                                Dialog.show("Result", resultMsg, "OK", null);
                                 // In a real app, we would use TextToSpeech here
-                                // CN1 doesn't have a built-in TTS lib in the core, usually requires a cn1lib or
-                                // native interface.
-                                // For this demo, we'll simulate it with a Dialog.
                             });
                         }
 
@@ -84,6 +111,88 @@ public class PatientDashboard extends Form {
                         }
                     });
         }
+    }
+
+    private void uploadImage() {
+        // DEBUG: Verify button click
+        Dialog.show("Debug", "Upload Button Clicked. Opening Gallery...", "OK", null);
+
+        Display.getInstance().openGallery(e -> {
+            if (e != null && e.getSource() != null) {
+                String filePath = (String) e.getSource();
+                System.out.println("Selected file: " + filePath);
+
+                ToastBar.showInfoMessage("Uploading...");
+
+                // Use the generic /api/recognize as per user request (or /api/groups/... if
+                // intended context is same)
+                // User request said: "hara un POST a node-RED mandandole la imagen a
+                // /api/recognize"
+                // So we will use "/api/recognize"
+
+                Map<String, Object> params = new HashMap<>();
+                Long groupId = MemoryLens.getFamilyGroupId();
+
+                System.out.println("Group ID: " + groupId);
+
+                // DEBUG: Force a Dialog to confirm ID visibility
+                Dialog.show("Debug", "Uploading with Group ID: " + groupId, "OK", null);
+
+                if (groupId != null) {
+                    params.put("groupId", groupId);
+                } else {
+                    Dialog.show("Error", "Group ID is null. Please login again.", "OK", null);
+                    return;
+                }
+
+                GenericNetworkService.getInstance().upload("/api/recognize", filePath,
+                        params,
+                        new GenericNetworkService.NetworkCallback() {
+                            @Override
+                            public void onSuccess(Map<String, Object> response) {
+                                System.out.println("uploadImage Response: " + response); // LOGGING ADDED
+
+                                // The parser returns 'root' if it's a JSON array
+                                java.util.List<Map<String, Object>> list = (java.util.List<Map<String, Object>>) response
+                                        .get("root");
+                                String name = "Desconocido";
+                                String message = "Result: " + name;
+
+                                if (list != null && !list.isEmpty()) {
+                                    Map<String, Object> top = list.get(0);
+                                    if (top != null) {
+                                        Double score = (Double) top.get("similarity");
+                                        System.out.println("Top score: " + score); // LOG SCORE
+                                        if (score != null && score > 0.4) {
+                                            name = (String) top.get("name");
+                                            String context = (String) top.get("context");
+                                            if (context != null && !context.isEmpty()) {
+                                                message = "This is " + name + " (" + context + ")";
+                                            } else {
+                                                message = "This is " + name;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                final String resultMsg = message;
+                                Display.getInstance().callSerially(() -> {
+                                    Dialog.show("Result", resultMsg, "OK", null);
+                                });
+                            }
+
+                            @Override
+                            public void onFailure(String errorMessage) {
+                                Display.getInstance().callSerially(() -> {
+                                    Dialog.show("Error", "Upload failed: " + errorMessage, "OK", null);
+                                });
+                            }
+                        });
+            } else {
+                System.out.println("No image selected");
+                Dialog.show("Info", "No image selected", "OK", null);
+            }
+        }, Display.GALLERY_IMAGE);
     }
 
     private void recordVoice() {

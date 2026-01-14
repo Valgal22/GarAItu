@@ -120,23 +120,25 @@ public class PatientDashboard extends Form {
     }
 
     private void handleAudioResponse(Map<String, Object> response) {
-        byte[] audioData = (byte[]) response.get("audioData");
-        String recognizedPerson = (String) response.get("recognizedPerson");
-        final String name = recognizedPerson != null ? com.codename1.io.Util.decode("UTF-8", recognizedPerson, false)
-                : "Desconocido";
+        // 1. IMPORTANTE: En lugar de (byte[]), lo cogemos como String y decodificamos
+        // el Base64
+        String audioBase64 = (String) response.get("audioData");
+        byte[] audioData = com.codename1.util.Base64.decode(audioBase64.getBytes());
 
+        // 2. Cogemos el nombre directamente sin el Util.decode que daba error
+        String name = (String) response.get("recognizedPerson");
+        if (name == null)
+            name = "Desconocido";
+        final String finalName = name;
         Display.getInstance().callSerially(() -> {
             try {
-                Media m = MediaManager.createMedia(new java.io.ByteArrayInputStream(audioData), "audio/wav", () -> {
-                    // Playback finished cleanup if needed
-                });
+                Media m = MediaManager.createMedia(new java.io.ByteArrayInputStream(audioData), "audio/wav", null);
                 if (m != null) {
                     m.play();
                 }
-                Dialog.show("Result", "This is " + name, "OK", null);
+                Dialog.show("Result", "This is " + finalName, "OK", null);
             } catch (Exception err) {
-                System.out.println("Error playing audio: " + err.getMessage());
-                Dialog.show("Result", "Recognized: " + name + " (Audio failed)", "OK", null);
+                Dialog.show("Result", "Recognized: " + finalName + " (Audio failed)", "OK", null);
             }
         });
     }

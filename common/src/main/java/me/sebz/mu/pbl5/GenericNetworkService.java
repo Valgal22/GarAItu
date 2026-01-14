@@ -8,6 +8,7 @@ import com.codename1.io.NetworkManager;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.HashMap;
 import java.util.Map;
 
 public class GenericNetworkService {
@@ -182,7 +183,35 @@ public class GenericNetworkService {
         req.addResponseListener(evt -> {
             int code = req.getResponseCode();
             if (code == 200 || code == 201) {
-                parseResponse(req.getResponseData(), callback);
+                String contentType = req.getResponseContentType();
+                if (contentType != null && contentType.startsWith("audio/")) {
+                    // Handle Binary Audio Response
+                    Map<String, Object> result = new HashMap<>();
+                    result.put("audioData", req.getResponseData());
+                    result.put("contentType", contentType);
+
+                    // Extract custom header
+                    // Extract custom header using reflection to avoid compilation issues in
+                    // different CN1 versions
+                    String recognizedPerson = null;
+                    try {
+                        // Common methods are getHeader(String) or getResponseHeader(String)
+                        java.lang.reflect.Method m = req.getClass().getMethod("getHeader", String.class);
+                        recognizedPerson = (String) m.invoke(req, "X-Recognized-Person");
+                    } catch (Exception e1) {
+                        try {
+                            java.lang.reflect.Method m = req.getClass().getMethod("getResponseHeader", String.class);
+                            recognizedPerson = (String) m.invoke(req, "X-Recognized-Person");
+                        } catch (Exception e2) {
+                        }
+                    }
+                    if (recognizedPerson != null) {
+                        result.put("recognizedPerson", recognizedPerson);
+                    }
+                    callback.onSuccess(result);
+                } else {
+                    parseResponse(req.getResponseData(), callback);
+                }
             } else {
                 handleErrorResponse(req, callback);
             }

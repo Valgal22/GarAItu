@@ -1,5 +1,7 @@
 me\sebz\mu\pbl5\services\AuthServiceTest$12.class
 me\sebz\mu\pbl5\logic\FaceResultUtilTest.class
+me\sebz\mu\pbl5\ui\RegistrationValidationUiTest.class
+me\sebz\mu\pbl5\ui\PatientDashboardVoiceQueryUiTest.class
 me\sebz\mu\pbl5\services\AuthServiceTest$9.class
 me\sebz\mu\pbl5\services\GroupServiceTest$3.class
 me\sebz\mu\pbl5\services\AuthServiceTest$2.class
@@ -16,6 +18,7 @@ me\sebz\mu\pbl5\services\AuthServiceTest$5.class
 me\sebz\mu\pbl5\services\GroupServiceTest$7.class
 me\sebz\mu\pbl5\services\AuthServiceTest$15.class
 me\sebz\mu\pbl5\services\AuthServiceTest$10.class
+me\sebz\mu\pbl5\ui\AdminDashboardNoGroupUiTest.class
 me\sebz\mu\pbl5\services\GroupServiceTest$2.class
 me\sebz\mu\pbl5\MyFirstTest.class
 me\sebz\mu\pbl5\services\AuthServiceTest$8.class
@@ -24,11 +27,13 @@ me\sebz\mu\pbl5\services\GroupServiceTest.class
 me\sebz\mu\pbl5\logic\ValidationTest.class
 me\sebz\mu\pbl5\services\AuthServiceTest$3.class
 me\sebz\mu\pbl5\services\AuthServiceTest$13.class
+me\sebz\mu\pbl5\ui\GroupOnboardingJoinEmptyCodeUiTest.class
 me\sebz\mu\pbl5\services\AuthServiceTest$6.class
 me\sebz\mu\pbl5\services\FakeNetworkClient.class
 me\sebz\mu\pbl5\services\GroupServiceTest$6.class
 me\sebz\mu\pbl5\logic\IdUtilTest.class
 me\sebz\mu\pbl5\services\GroupServiceTest$1.class
+me\sebz\mu\pbl5\ui\LoginToRegisterUiTest.class
 me\sebz\mu\pbl5\services\AuthServiceTest$16.class
 me\sebz\mu\pbl5\services\AuthServiceTest$11.class
 me\sebz\mu\pbl5\services\AuthServiceTest$1.class

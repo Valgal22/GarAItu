@@ -42,7 +42,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Mockito (opcional) -->
+        <!-- Mockito -->
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
@@ -52,8 +52,7 @@
     </dependencies>
 
     <profiles>
-        <!-- (Mantengo tus perfiles tal cual, sin cambios) -->
-        <!-- ... puedes dejar tus profiles como estaban ... -->
+        <!-- Mantén tus perfiles tal cual los tengas -->
     </profiles>
 
     <build>
@@ -114,7 +113,6 @@
                 </executions>
             </plugin>
 
-            <!-- Ejecutar JUnit 5 (si no, te saldrá Tests run: 0) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -124,7 +122,7 @@
                 </configuration>
             </plugin>
 
-            <!-- JaCoCo: genera el XML que Sonar necesita -->
+            <!-- JaCoCo: XML para Sonar -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
@@ -136,16 +134,22 @@
                             <goal>prepare-agent</goal>
                         </goals>
                     </execution>
+
                     <execution>
                         <id>report</id>
                         <phase>verify</phase>
                         <goals>
                             <goal>report</goal>
                         </goals>
+                        <configuration>
+                            <formats>
+                                <format>XML</format>
+                                <format>HTML</format>
+                            </formats>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
-
         </plugins>
     </build>
 

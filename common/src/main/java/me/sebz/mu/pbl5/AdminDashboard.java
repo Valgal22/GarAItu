@@ -113,7 +113,12 @@ public class AdminDashboard extends Form {
         row.getAllStyles().setPadding(2, 2, 2, 2);
         row.getAllStyles().setBorder(com.codename1.ui.plaf.Border.createLineBorder(1, 0xcccccc));
 
-        Label nameLabel = new Label(name + " (" + roleName + ")");
+        String chatId = (String) member.get("chatId");
+        String info = name + " (" + roleName + ")";
+        if (chatId != null && !chatId.isEmpty()) {
+            info += " [TG: " + chatId + "]";
+        }
+        Label nameLabel = new Label(info);
         Button deleteBtn = new Button();
         deleteBtn.setMaterialIcon(FontImage.MATERIAL_DELETE, 4);
         deleteBtn.addActionListener(e -> {

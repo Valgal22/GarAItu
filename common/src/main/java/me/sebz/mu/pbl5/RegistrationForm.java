@@ -34,6 +34,19 @@ public class RegistrationForm extends Form {
         TextField contextField = new TextField("", "Context (e.g. Who are you?)", 20, TextField.ANY);
         contextField.setUIID("TextField");
 
+        TextField chatId = new TextField("", "Telegram Chat ID (Optional)", 20, TextField.ANY);
+        chatId.setUIID("TextField");
+
+        Button helpButton = new Button("?");
+        helpButton.setUIID("ButtonSecondary");
+        helpButton.addActionListener(e -> {
+            Dialog.show("Telegram ID help",
+                    "Search for '@userinfobot' on Telegram.\n" +
+                            "Click 'Start'.\n" +
+                            "Copy the ID number it gives you and paste it here.",
+                    "OK", null);
+        });
+
         Button registerButton = new Button("Register");
         registerButton.setMaterialIcon(FontImage.MATERIAL_PERSON_ADD, 5);
 
@@ -42,6 +55,7 @@ public class RegistrationForm extends Form {
             String email = emailField.getText();
             String password = passwordField.getText();
             String context = contextField.getText();
+            String cId = chatId.getText();
             int roleIdx = rolePicker.getSelectedIndex();
             short role = (short) roleIdx;
 
@@ -56,6 +70,7 @@ public class RegistrationForm extends Form {
             regData.put("password", password);
             regData.put("context", context);
             regData.put("role", role);
+            regData.put("chatId", cId);
 
             GenericNetworkService.getInstance().post("/api/auth/register", regData,
                     new GenericNetworkService.NetworkCallback() {
@@ -91,6 +106,11 @@ public class RegistrationForm extends Form {
         center.add(rolePicker);
         center.add(new Label("Context (optional):"));
         center.add(contextField);
+
+        Container chatIdCnt = BorderLayout.center(chatId).add(BorderLayout.EAST, helpButton);
+        center.add(new Label("Telegram Chat ID (optional):"));
+        center.add(chatIdCnt);
+
         center.add(registerButton);
         center.add(backButton);
 

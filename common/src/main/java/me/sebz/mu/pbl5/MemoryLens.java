@@ -18,6 +18,7 @@ public class MemoryLens extends Lifecycle {
     private static Long memberId;
     private static Long familyGroupId;
     private static String userRole;
+    private static String chatId; // New field
     private static boolean hasEmbedding; // New field
 
     public static boolean hasEmbedding() {
@@ -58,6 +59,14 @@ public class MemoryLens extends Lifecycle {
 
     public static void setUserRole(String role) {
         userRole = role;
+    }
+
+    public static String getChatId() {
+        return chatId;
+    }
+
+    public static void setChatId(String value) {
+        chatId = value;
     }
 
     public static void navigateToAppropriateDashboard() {
@@ -165,6 +174,10 @@ public class MemoryLens extends Lifecycle {
                             MemoryLens.setMemberId(mId);
                             MemoryLens.setUserRole(roleShort);
                             MemoryLens.setHasEmbedding(hasEmb); // Set it
+
+                            if (response.containsKey("chatId")) {
+                                MemoryLens.setChatId(String.valueOf(response.get("chatId")));
+                            }
 
                             MemoryLens.navigateToAppropriateDashboard();
                         }

@@ -91,9 +91,9 @@ public class PatientDashboard extends Form {
                                     Double score = (Double) top.get("similarity");
                                     System.out.println("Top score: " + score); // LOG SCORE
                                     if (score != null && score > 0.4) {
-                                        name = (String) top.get("name");
-                                        String context = (String) top.get("context");
-                                        if (context != null && !context.isEmpty()) {
+                                        name = decodeSafely((String) top.get("name"), "Desconocido");
+                                        String context = decodeSafely((String) top.get("context"), "");
+                                        if (!context.isEmpty()) {
                                             message = "This is " + name + " (" + context + ")";
                                         } else {
                                             message = "This is " + name;
@@ -135,8 +135,10 @@ public class PatientDashboard extends Form {
         }
 
         String recognizedPerson = (String) response.get("recognizedPerson");
-        final String name = recognizedPerson != null ? com.codename1.io.Util.decode("UTF-8", recognizedPerson, false)
-                : "Desconocido";
+        String recognizedContext = (String) response.get("recognizedContext");
+
+        final String name = decodeSafely(recognizedPerson, "Desconocido");
+        final String context = decodeSafely(recognizedContext, "");
 
         final byte[] finalAudioData = audioData;
         Display.getInstance().callSerially(() -> {
@@ -144,18 +146,39 @@ public class PatientDashboard extends Form {
                 if (finalAudioData.length > 0) {
                     Media m = MediaManager.createMedia(new java.io.ByteArrayInputStream(finalAudioData), "audio/wav",
                             () -> {
-                                // Playback finished cleanup if needed
                             });
                     if (m != null) {
                         m.play();
                     }
                 }
-                Dialog.show("Result", "This is " + name, "OK", null);
+                String message = "This is " + name;
+                if (!context.isEmpty()) {
+                    message += " (" + context + ")";
+                }
+                Dialog.show("Result", message, "OK", null);
             } catch (Exception err) {
                 System.out.println("Error playing audio: " + err.getMessage());
-                Dialog.show("Result", "Recognized: " + name + " (Audio failed: " + err.getMessage() + ")", "OK", null);
+                String message = "Recognized: " + name;
+                if (!context.isEmpty()) {
+                    message += " (" + context + ")";
+                }
+                Dialog.show("Result", message + " (Audio failed: " + err.getMessage() + ")", "OK", null);
             }
         });
+    }
+
+    private String decodeSafely(String value, String fallback) {
+        if (value == null)
+            return fallback;
+        try {
+            // Check if it looks like URL encoded
+            if (value.contains("%")) {
+                return com.codename1.io.Util.decode("UTF-8", value, false);
+            }
+            return value;
+        } catch (Exception e) {
+            return value;
+        }
     }
 
     private void uploadImage() {
@@ -213,9 +236,9 @@ public class PatientDashboard extends Form {
                                         Double score = (Double) top.get("similarity");
                                         System.out.println("Top score: " + score); // LOG SCORE
                                         if (score != null && score > 0.4) {
-                                            name = (String) top.get("name");
-                                            String context = (String) top.get("context");
-                                            if (context != null && !context.isEmpty()) {
+                                            name = decodeSafely((String) top.get("name"), "Desconocido");
+                                            String context = decodeSafely((String) top.get("context"), "");
+                                            if (!context.isEmpty()) {
                                                 message = "This is " + name + " (" + context + ")";
                                             } else {
                                                 message = "This is " + name;

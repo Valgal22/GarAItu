@@ -28,7 +28,7 @@ public class GenericNetworkService implements NetworkClient {
     }
 
     @Override
-    public void get(String endpoint, Callback callback) {
+    public void get(String endpoint, me.sebz.mu.pbl5.net.NetworkClient.Callback callback) {
         ConnectionRequest req = new ConnectionRequest();
         req.setUrl(BASE_URL + endpoint);
         req.setHttpMethod("GET");
@@ -49,7 +49,7 @@ public class GenericNetworkService implements NetworkClient {
     }
 
     @Override
-    public void post(String endpoint, Map<String, Object> data, Callback callback) {
+    public void post(String endpoint, Map<String, Object> data, me.sebz.mu.pbl5.net.NetworkClient.Callback callback) {
         ConnectionRequest req = new ConnectionRequest();
         req.setUrl(BASE_URL + endpoint);
         req.setPost(true);
@@ -76,7 +76,7 @@ public class GenericNetworkService implements NetworkClient {
     }
 
     @Override
-    public void put(String endpoint, Map<String, Object> data, Callback callback) {
+    public void put(String endpoint, Map<String, Object> data, me.sebz.mu.pbl5.net.NetworkClient.Callback callback) {
         ConnectionRequest req = new ConnectionRequest();
         req.setUrl(BASE_URL + endpoint);
         req.setHttpMethod("PUT");
@@ -106,7 +106,7 @@ public class GenericNetworkService implements NetworkClient {
     }
 
     @Override
-    public void delete(String endpoint, Callback callback) {
+    public void delete(String endpoint, me.sebz.mu.pbl5.net.NetworkClient.Callback callback) {
         ConnectionRequest req = new ConnectionRequest();
         req.setUrl(BASE_URL + endpoint);
         req.setHttpMethod("DELETE");
@@ -131,7 +131,8 @@ public class GenericNetworkService implements NetworkClient {
     }
 
     @Override
-    public void upload(String endpoint, String filePath, Map<String, Object> data, Callback callback) {
+    public void upload(String endpoint, String filePath, Map<String, Object> data,
+            me.sebz.mu.pbl5.net.NetworkClient.Callback callback) {
         MultipartRequest req = new MultipartRequest();
         req.setUrl(BASE_URL + endpoint);
         addToken(req);
@@ -159,18 +160,24 @@ public class GenericNetworkService implements NetworkClient {
                     result.put("contentType", contentType);
 
                     String recognizedPerson = null;
+                    String recognizedContext = null;
                     try {
                         java.lang.reflect.Method m = req.getClass().getMethod("getHeader", String.class);
                         recognizedPerson = (String) m.invoke(req, "X-Recognized-Person");
+                        recognizedContext = (String) m.invoke(req, "X-Recognized-Context");
                     } catch (Exception e1) {
                         try {
                             java.lang.reflect.Method m = req.getClass().getMethod("getResponseHeader", String.class);
                             recognizedPerson = (String) m.invoke(req, "X-Recognized-Person");
+                            recognizedContext = (String) m.invoke(req, "X-Recognized-Context");
                         } catch (Exception e2) {
                         }
                     }
                     if (recognizedPerson != null) {
                         result.put("recognizedPerson", recognizedPerson);
+                    }
+                    if (recognizedContext != null) {
+                        result.put("recognizedContext", recognizedContext);
                     }
                     callback.onSuccess(result);
                 } else {
@@ -192,7 +199,7 @@ public class GenericNetworkService implements NetworkClient {
         }
     }
 
-    private void parseResponse(byte[] data, Callback callback) {
+    private void parseResponse(byte[] data, me.sebz.mu.pbl5.net.NetworkClient.Callback callback) {
         try {
             JSONParser parser = new JSONParser();
             Map<String, Object> result = parser.parseJSON(
@@ -204,7 +211,7 @@ public class GenericNetworkService implements NetworkClient {
         }
     }
 
-    private void handleErrorResponse(ConnectionRequest req, Callback callback) {
+    private void handleErrorResponse(ConnectionRequest req, me.sebz.mu.pbl5.net.NetworkClient.Callback callback) {
         int code = req.getResponseCode();
         byte[] data = req.getResponseData();
         String errorMsg = "Server Error: " + code;

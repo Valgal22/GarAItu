@@ -4,6 +4,7 @@ import static com.codename1.ui.CN.*;
 import com.codename1.system.Lifecycle;
 import com.codename1.ui.*;
 import com.codename1.ui.layouts.*;
+import me.sebz.mu.pbl5.net.NetworkClient;
 import com.codename1.io.*;
 import com.codename1.ui.plaf.*;
 import com.codename1.ui.util.Resources;
@@ -147,7 +148,7 @@ public class MemoryLens extends Lifecycle {
             loginData.put("password", password);
 
             GenericNetworkService.getInstance().post("/api/auth/login", loginData,
-                    new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
+                    new NetworkClient.Callback() {
                         @Override
                         public void onSuccess(java.util.Map<String, Object> response) {
                             System.out.println("DEBUG: Login Response: " + response); // LOG ADDED

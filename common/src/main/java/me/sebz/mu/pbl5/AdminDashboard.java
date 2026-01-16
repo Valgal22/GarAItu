@@ -47,7 +47,7 @@ public class AdminDashboard extends Form {
 
         // Endpoint: /api/group/{id}/member
         GenericNetworkService.getInstance().get("/api/group/" + groupId + "/member",
-                new GenericNetworkService.NetworkCallback() {
+                new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                     @Override
                     public void onSuccess(Map<String, Object> response) {
                         System.out.println("DEBUG: Members Response: " + response); // LOGGING ADDED
@@ -139,10 +139,10 @@ public class AdminDashboard extends Form {
         if (groupId == null)
             return;
 
-        // DELETE /garAItu/group/{groupId}/member/{memberId}
-        String endpoint = "/garAItu/group/" + groupId + "/member/" + memberId;
+        // DELETE /api/group/{groupId}/member/{memberId}
+        String endpoint = "/api/group/" + groupId + "/member/" + memberId;
 
-        GenericNetworkService.getInstance().delete(endpoint, new GenericNetworkService.NetworkCallback() {
+        GenericNetworkService.getInstance().delete(endpoint, new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
             @Override
             public void onSuccess(Map<String, Object> response) {
                 Display.getInstance().callSerially(() -> {
@@ -167,7 +167,7 @@ public class AdminDashboard extends Form {
             return;
         }
         GenericNetworkService.getInstance().get("/api/groups/" + groupId + "/invite",
-                new GenericNetworkService.NetworkCallback() {
+                new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                     @Override
                     public void onSuccess(Map<String, Object> response) {
 

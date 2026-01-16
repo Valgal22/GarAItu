@@ -69,7 +69,7 @@ public class PatientDashboard extends Form {
             Long groupId = MemoryLens.getFamilyGroupId();
             GenericNetworkService.getInstance().upload("/api/recognize", filePath,
                     new HashMap<>(),
-                    new GenericNetworkService.NetworkCallback() {
+                    new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                         @Override
                         public void onSuccess(Map<String, Object> response) {
                             if (response.containsKey("audioData")) {
@@ -120,23 +120,40 @@ public class PatientDashboard extends Form {
     }
 
     private void handleAudioResponse(Map<String, Object> response) {
-        byte[] audioData = (byte[]) response.get("audioData");
+        // Node-RED envia audioData como Base64 String
+        String audioBase64 = (String) response.get("audioData");
+        byte[] audioData;
+        try {
+            if (audioBase64 != null) {
+                audioData = java.util.Base64.getDecoder().decode(audioBase64);
+            } else {
+                audioData = new byte[0];
+            }
+        } catch (Exception e) {
+            System.out.println("Base64 decode error: " + e.getMessage());
+            audioData = new byte[0];
+        }
+
         String recognizedPerson = (String) response.get("recognizedPerson");
         final String name = recognizedPerson != null ? com.codename1.io.Util.decode("UTF-8", recognizedPerson, false)
                 : "Desconocido";
 
+        final byte[] finalAudioData = audioData;
         Display.getInstance().callSerially(() -> {
             try {
-                Media m = MediaManager.createMedia(new java.io.ByteArrayInputStream(audioData), "audio/wav", () -> {
-                    // Playback finished cleanup if needed
-                });
-                if (m != null) {
-                    m.play();
+                if (finalAudioData.length > 0) {
+                    Media m = MediaManager.createMedia(new java.io.ByteArrayInputStream(finalAudioData), "audio/wav",
+                            () -> {
+                                // Playback finished cleanup if needed
+                            });
+                    if (m != null) {
+                        m.play();
+                    }
                 }
                 Dialog.show("Result", "This is " + name, "OK", null);
             } catch (Exception err) {
                 System.out.println("Error playing audio: " + err.getMessage());
-                Dialog.show("Result", "Recognized: " + name + " (Audio failed)", "OK", null);
+                Dialog.show("Result", "Recognized: " + name + " (Audio failed: " + err.getMessage() + ")", "OK", null);
             }
         });
     }
@@ -175,7 +192,7 @@ public class PatientDashboard extends Form {
 
                 GenericNetworkService.getInstance().upload("/api/recognize", filePath,
                         params,
-                        new GenericNetworkService.NetworkCallback() {
+                        new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                             @Override
                             public void onSuccess(Map<String, Object> response) {
                                 if (response.containsKey("audioData")) {

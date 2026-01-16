@@ -73,7 +73,7 @@ public class RegistrationForm extends Form {
             regData.put("chatId", cId);
 
             GenericNetworkService.getInstance().post("/api/auth/register", regData,
-                    new GenericNetworkService.NetworkCallback() {
+                    new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                         @Override
                         public void onSuccess(Map<String, Object> response) {
                             Display.getInstance().callSerially(() -> {

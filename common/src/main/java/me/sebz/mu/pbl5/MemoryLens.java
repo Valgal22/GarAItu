@@ -147,7 +147,7 @@ public class MemoryLens extends Lifecycle {
             loginData.put("password", password);
 
             GenericNetworkService.getInstance().post("/api/auth/login", loginData,
-                    new GenericNetworkService.NetworkCallback() {
+                    new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                         @Override
                         public void onSuccess(java.util.Map<String, Object> response) {
                             System.out.println("DEBUG: Login Response: " + response); // LOG ADDED
@@ -179,6 +179,8 @@ public class MemoryLens extends Lifecycle {
                                 MemoryLens.setChatId(String.valueOf(response.get("chatId")));
                             }
 
+                            System.out.println(
+                                    "DEBUG: Navigating to dashboard with Role: " + roleShort + ", GroupID: " + fgId);
                             MemoryLens.navigateToAppropriateDashboard();
                         }
 

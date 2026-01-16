@@ -37,7 +37,7 @@ public class GroupOnboardingForm extends Form {
             data.put("inviteCode", code);
 
             GenericNetworkService.getInstance().post("/api/groups/join", data,
-                    new GenericNetworkService.NetworkCallback() {
+                    new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                         @Override
                         public void onSuccess(Map<String, Object> response) {
                             // After joining, we might need to refresh user data or just go to dashboard
@@ -98,7 +98,7 @@ public class GroupOnboardingForm extends Form {
             data.put("name", name);
 
             GenericNetworkService.getInstance().post("/api/groups/create", data,
-                    new GenericNetworkService.NetworkCallback() {
+                    new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                         @Override
                         public void onSuccess(Map<String, Object> response) {
                             Object fgIdObj = response.get("id");

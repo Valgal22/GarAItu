@@ -2,7 +2,8 @@ package me.sebz.mu.pbl5;
 
 import com.codename1.capture.Capture;
 import com.codename1.components.ToastBar;
-
+import com.codename1.media.Media;
+import com.codename1.media.MediaManager;
 import com.codename1.ui.*;
 import com.codename1.ui.layouts.BorderLayout;
 
@@ -71,7 +72,12 @@ public class PatientDashboard extends Form {
                     new GenericNetworkService.NetworkCallback() {
                         @Override
                         public void onSuccess(Map<String, Object> response) {
+                            if (response.containsKey("audioData")) {
+                                handleAudioResponse(response);
+                                return;
+                            }
                             System.out.println("scanFace Response: " + response); // LOGGING ADDED
+                            // ... existing logic ...
 
                             // The parser returns 'root' if it's a JSON array
                             java.util.List<Map<String, Object>> list = (java.util.List<Map<String, Object>>) response
@@ -113,6 +119,30 @@ public class PatientDashboard extends Form {
         }
     }
 
+    private void handleAudioResponse(Map<String, Object> response) {
+        // 1. IMPORTANTE: En lugar de (byte[]), lo cogemos como String y decodificamos
+        // el Base64
+        String audioBase64 = (String) response.get("audioData");
+        byte[] audioData = com.codename1.util.Base64.decode(audioBase64.getBytes());
+
+        // 2. Cogemos el nombre directamente sin el Util.decode que daba error
+        String name = (String) response.get("recognizedPerson");
+        if (name == null)
+            name = "Desconocido";
+        final String finalName = name;
+        Display.getInstance().callSerially(() -> {
+            try {
+                Media m = MediaManager.createMedia(new java.io.ByteArrayInputStream(audioData), "audio/wav", null);
+                if (m != null) {
+                    m.play();
+                }
+                Dialog.show("Result", "This is " + finalName, "OK", null);
+            } catch (Exception err) {
+                Dialog.show("Result", "Recognized: " + finalName + " (Audio failed)", "OK", null);
+            }
+        });
+    }
+
     private void uploadImage() {
         // DEBUG: Verify button click
         Dialog.show("Debug", "Upload Button Clicked. Opening Gallery...", "OK", null);
@@ -150,6 +180,10 @@ public class PatientDashboard extends Form {
                         new GenericNetworkService.NetworkCallback() {
                             @Override
                             public void onSuccess(Map<String, Object> response) {
+                                if (response.containsKey("audioData")) {
+                                    handleAudioResponse(response);
+                                    return;
+                                }
                                 System.out.println("uploadImage Response: " + response); // LOGGING ADDED
 
                                 // The parser returns 'root' if it's a JSON array

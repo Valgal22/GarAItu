@@ -4,6 +4,7 @@ import static com.codename1.ui.CN.*;
 import com.codename1.system.Lifecycle;
 import com.codename1.ui.*;
 import com.codename1.ui.layouts.*;
+import me.sebz.mu.pbl5.net.NetworkClient;
 import com.codename1.io.*;
 import com.codename1.ui.plaf.*;
 import com.codename1.ui.util.Resources;
@@ -18,6 +19,7 @@ public class MemoryLens extends Lifecycle {
     private static Long memberId;
     private static Long familyGroupId;
     private static String userRole;
+    private static String chatId; // New field
     private static boolean hasEmbedding; // New field
 
     public static boolean hasEmbedding() {
@@ -58,6 +60,14 @@ public class MemoryLens extends Lifecycle {
 
     public static void setUserRole(String role) {
         userRole = role;
+    }
+
+    public static String getChatId() {
+        return chatId;
+    }
+
+    public static void setChatId(String value) {
+        chatId = value;
     }
 
     public static void navigateToAppropriateDashboard() {
@@ -138,7 +148,7 @@ public class MemoryLens extends Lifecycle {
             loginData.put("password", password);
 
             GenericNetworkService.getInstance().post("/api/auth/login", loginData,
-                    new GenericNetworkService.NetworkCallback() {
+                    new NetworkClient.Callback() {
                         @Override
                         public void onSuccess(java.util.Map<String, Object> response) {
                             System.out.println("DEBUG: Login Response: " + response); // LOG ADDED
@@ -166,6 +176,12 @@ public class MemoryLens extends Lifecycle {
                             MemoryLens.setUserRole(roleShort);
                             MemoryLens.setHasEmbedding(hasEmb); // Set it
 
+                            if (response.containsKey("chatId")) {
+                                MemoryLens.setChatId(String.valueOf(response.get("chatId")));
+                            }
+
+                            System.out.println(
+                                    "DEBUG: Navigating to dashboard with Role: " + roleShort + ", GroupID: " + fgId);
                             MemoryLens.navigateToAppropriateDashboard();
                         }
 

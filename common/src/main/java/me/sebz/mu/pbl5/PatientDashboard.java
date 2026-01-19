@@ -2,7 +2,8 @@ package me.sebz.mu.pbl5;
 
 import com.codename1.capture.Capture;
 import com.codename1.components.ToastBar;
-
+import com.codename1.media.Media;
+import com.codename1.media.MediaManager;
 import com.codename1.ui.*;
 import com.codename1.ui.layouts.BorderLayout;
 
@@ -68,10 +69,15 @@ public class PatientDashboard extends Form {
             Long groupId = MemoryLens.getFamilyGroupId();
             GenericNetworkService.getInstance().upload("/api/recognize", filePath,
                     new HashMap<>(),
-                    new GenericNetworkService.NetworkCallback() {
+                    new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                         @Override
                         public void onSuccess(Map<String, Object> response) {
+                            if (response.containsKey("audioData")) {
+                                handleAudioResponse(response);
+                                return;
+                            }
                             System.out.println("scanFace Response: " + response); // LOGGING ADDED
+                            // ... existing logic ...
 
                             // The parser returns 'root' if it's a JSON array
                             java.util.List<Map<String, Object>> list = (java.util.List<Map<String, Object>>) response
@@ -85,9 +91,9 @@ public class PatientDashboard extends Form {
                                     Double score = (Double) top.get("similarity");
                                     System.out.println("Top score: " + score); // LOG SCORE
                                     if (score != null && score > 0.4) {
-                                        name = (String) top.get("name");
-                                        String context = (String) top.get("context");
-                                        if (context != null && !context.isEmpty()) {
+                                        name = decodeSafely((String) top.get("name"), "Desconocido");
+                                        String context = decodeSafely((String) top.get("context"), "");
+                                        if (!context.isEmpty()) {
                                             message = "This is " + name + " (" + context + ")";
                                         } else {
                                             message = "This is " + name;
@@ -110,6 +116,68 @@ public class PatientDashboard extends Form {
                             });
                         }
                     });
+        }
+    }
+
+    private void handleAudioResponse(Map<String, Object> response) {
+        // Node-RED envia audioData como Base64 String
+        String audioBase64 = (String) response.get("audioData");
+        byte[] audioData;
+        try {
+            if (audioBase64 != null) {
+                audioData = java.util.Base64.getDecoder().decode(audioBase64);
+            } else {
+                audioData = new byte[0];
+            }
+        } catch (Exception e) {
+            System.out.println("Base64 decode error: " + e.getMessage());
+            audioData = new byte[0];
+        }
+
+        String recognizedPerson = (String) response.get("recognizedPerson");
+        String recognizedContext = (String) response.get("recognizedContext");
+
+        final String name = decodeSafely(recognizedPerson, "Desconocido");
+        final String context = decodeSafely(recognizedContext, "");
+
+        final byte[] finalAudioData = audioData;
+        Display.getInstance().callSerially(() -> {
+            try {
+                if (finalAudioData.length > 0) {
+                    Media m = MediaManager.createMedia(new java.io.ByteArrayInputStream(finalAudioData), "audio/wav",
+                            () -> {
+                            });
+                    if (m != null) {
+                        m.play();
+                    }
+                }
+                String message = "This is " + name;
+                if (!context.isEmpty()) {
+                    message += " (" + context + ")";
+                }
+                Dialog.show("Result", message, "OK", null);
+            } catch (Exception err) {
+                System.out.println("Error playing audio: " + err.getMessage());
+                String message = "Recognized: " + name;
+                if (!context.isEmpty()) {
+                    message += " (" + context + ")";
+                }
+                Dialog.show("Result", message + " (Audio failed: " + err.getMessage() + ")", "OK", null);
+            }
+        });
+    }
+
+    private String decodeSafely(String value, String fallback) {
+        if (value == null)
+            return fallback;
+        try {
+            // Check if it looks like URL encoded
+            if (value.contains("%")) {
+                return com.codename1.io.Util.decode("UTF-8", value, false);
+            }
+            return value;
+        } catch (Exception e) {
+            return value;
         }
     }
 
@@ -147,9 +215,13 @@ public class PatientDashboard extends Form {
 
                 GenericNetworkService.getInstance().upload("/api/recognize", filePath,
                         params,
-                        new GenericNetworkService.NetworkCallback() {
+                        new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                             @Override
                             public void onSuccess(Map<String, Object> response) {
+                                if (response.containsKey("audioData")) {
+                                    handleAudioResponse(response);
+                                    return;
+                                }
                                 System.out.println("uploadImage Response: " + response); // LOGGING ADDED
 
                                 // The parser returns 'root' if it's a JSON array
@@ -164,9 +236,9 @@ public class PatientDashboard extends Form {
                                         Double score = (Double) top.get("similarity");
                                         System.out.println("Top score: " + score); // LOG SCORE
                                         if (score != null && score > 0.4) {
-                                            name = (String) top.get("name");
-                                            String context = (String) top.get("context");
-                                            if (context != null && !context.isEmpty()) {
+                                            name = decodeSafely((String) top.get("name"), "Desconocido");
+                                            String context = decodeSafely((String) top.get("context"), "");
+                                            if (!context.isEmpty()) {
                                                 message = "This is " + name + " (" + context + ")";
                                             } else {
                                                 message = "This is " + name;

@@ -47,7 +47,7 @@ public class AdminDashboard extends Form {
 
         // Endpoint: /api/group/{id}/member
         GenericNetworkService.getInstance().get("/api/group/" + groupId + "/member",
-                new GenericNetworkService.NetworkCallback() {
+                new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                     @Override
                     public void onSuccess(Map<String, Object> response) {
                         System.out.println("DEBUG: Members Response: " + response); // LOGGING ADDED
@@ -113,7 +113,12 @@ public class AdminDashboard extends Form {
         row.getAllStyles().setPadding(2, 2, 2, 2);
         row.getAllStyles().setBorder(com.codename1.ui.plaf.Border.createLineBorder(1, 0xcccccc));
 
-        Label nameLabel = new Label(name + " (" + roleName + ")");
+        String chatId = (String) member.get("chatId");
+        String info = name + " (" + roleName + ")";
+        if (chatId != null && !chatId.isEmpty()) {
+            info += " [TG: " + chatId + "]";
+        }
+        Label nameLabel = new Label(info);
         Button deleteBtn = new Button();
         deleteBtn.setMaterialIcon(FontImage.MATERIAL_DELETE, 4);
         deleteBtn.addActionListener(e -> {
@@ -134,10 +139,10 @@ public class AdminDashboard extends Form {
         if (groupId == null)
             return;
 
-        // DELETE /garAItu/group/{groupId}/member/{memberId}
-        String endpoint = "/garAItu/group/" + groupId + "/member/" + memberId;
+        // DELETE /api/group/{groupId}/member/{memberId}
+        String endpoint = "/api/group/" + groupId + "/member/" + memberId;
 
-        GenericNetworkService.getInstance().delete(endpoint, new GenericNetworkService.NetworkCallback() {
+        GenericNetworkService.getInstance().delete(endpoint, new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
             @Override
             public void onSuccess(Map<String, Object> response) {
                 Display.getInstance().callSerially(() -> {
@@ -162,7 +167,7 @@ public class AdminDashboard extends Form {
             return;
         }
         GenericNetworkService.getInstance().get("/api/groups/" + groupId + "/invite",
-                new GenericNetworkService.NetworkCallback() {
+                new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                     @Override
                     public void onSuccess(Map<String, Object> response) {
 

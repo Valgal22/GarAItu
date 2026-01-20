@@ -17,12 +17,15 @@ import com.codename1.ui.TextField;
 import com.codename1.ui.layouts.BoxLayout;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class FamilyDashboard extends Form {
 
     private static final String TITLE_ERROR = "Error";
+    private static final String TITLE_SUCCESS = "Success";
 
     // Registration UI Fields
     private TextField nameField;
@@ -56,7 +59,7 @@ public class FamilyDashboard extends Form {
                 new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                     @Override
                     public void onSuccess(Map<String, Object> response) {
-                        java.util.List<Map<String, Object>> list = extractMemberList(response);
+                        List<Map<String, Object>> list = extractMemberList(response);
                         boolean myEmbeddingStatus = extractMyEmbeddingStatus(list, memberId);
 
                         Display.getInstance().callSerially(() -> applyEmbeddingStatus(myEmbeddingStatus));
@@ -82,16 +85,16 @@ public class FamilyDashboard extends Form {
     }
 
     @SuppressWarnings("unchecked")
-    private java.util.List<Map<String, Object>> extractMemberList(Map<String, Object> response) {
+    private List<Map<String, Object>> extractMemberList(Map<String, Object> response) {
         Object root = (response != null) ? response.get("root") : null;
-        if (root instanceof java.util.List) {
-            return (java.util.List<Map<String, Object>>) root;
+        if (root instanceof List) {
+            return (List<Map<String, Object>>) root;
         }
-        return null;
+        return Collections.emptyList();
     }
 
-    private boolean extractMyEmbeddingStatus(java.util.List<Map<String, Object>> list, Long memberId) {
-        if (list == null || memberId == null) {
+    private boolean extractMyEmbeddingStatus(List<Map<String, Object>> list, Long memberId) {
+        if (list == null || list.isEmpty() || memberId == null) {
             return false;
         }
 
@@ -125,11 +128,6 @@ public class FamilyDashboard extends Form {
         }
     }
 
-    /*
-     * ==========================
-     * VIEW 1: REGISTRATION
-     * ==========================
-     */
     private void showRegistrationForm() {
         removeAll();
         setTitle("Add Your Profile");
@@ -160,7 +158,6 @@ public class FamilyDashboard extends Form {
         content.add(relationshipPicker);
         content.add(new Label("Context:"));
         content.add(contextArea);
-
         content.add(photoButton);
         content.add(imageLabel);
         content.add(uploadButton);
@@ -170,11 +167,6 @@ public class FamilyDashboard extends Form {
         revalidate();
     }
 
-    /*
-     * ==========================
-     * VIEW 2: MEMBER LIST (Read-Only) + EDIT
-     * ==========================
-     */
     private void showMemberListView() {
         removeAll();
         setTitle("Family Group");
@@ -209,11 +201,11 @@ public class FamilyDashboard extends Form {
                 new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                     @Override
                     public void onSuccess(Map<String, Object> response) {
-                        java.util.List<Map<String, Object>> list = extractMemberList(response);
+                        List<Map<String, Object>> list = extractMemberList(response);
 
                         Display.getInstance().callSerially(() -> {
                             memberListContainer.removeAll();
-                            if (list != null) {
+                            if (!list.isEmpty()) {
                                 for (Map<String, Object> member : list) {
                                     addMemberRow(member);
                                 }
@@ -292,7 +284,7 @@ public class FamilyDashboard extends Form {
                         @Override
                         public void onSuccess(Map<String, Object> response) {
                             Display.getInstance().callSerially(() -> {
-                                Dialog.show("Success", "Profile Updated", "OK", null);
+                                Dialog.show(TITLE_SUCCESS, "Profile Updated", "OK", null);
                                 showMemberListView();
                             });
                         }
@@ -369,7 +361,7 @@ public class FamilyDashboard extends Form {
                     @Override
                     public void onSuccess(Map<String, Object> response) {
                         Display.getInstance().callSerially(() -> {
-                            Dialog.show("Success", "Profile uploaded!", "OK", null);
+                            Dialog.show(TITLE_SUCCESS, "Profile uploaded!", "OK", null);
                             MemoryLens.setHasEmbedding(true);
                             showMemberListView();
                         });

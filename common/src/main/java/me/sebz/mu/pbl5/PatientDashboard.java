@@ -4,6 +4,7 @@ import com.codename1.components.ToastBar;
 import com.codename1.media.Media;
 import com.codename1.media.MediaManager;
 import com.codename1.ui.Button;
+import com.codename1.ui.CN1Constants;
 import com.codename1.ui.Container;
 import com.codename1.ui.Dialog;
 import com.codename1.ui.Display;
@@ -18,6 +19,9 @@ public class PatientDashboard extends Form {
 
     private static final String TITLE_ERROR = "Error";
     private static final String TITLE_RESULT = "Result";
+
+    private static final String PREFIX_THIS_IS = "This is ";
+    private static final String MSG_UNKNOWN_RESULT = "Result: Desconocido";
 
     public PatientDashboard() {
         super("MemoryLens", new BorderLayout());
@@ -77,7 +81,7 @@ public class PatientDashboard extends Form {
                             );
                         }
                     });
-        }, Display.GALLERY_IMAGE);
+        }, CN1Constants.GALLERY_IMAGE);
     }
 
     private void handleAudioResponse(Map<String, Object> response) {
@@ -100,11 +104,46 @@ public class PatientDashboard extends Form {
             }
         }
 
-        String message = "This is " + name;
-        if (!context.isEmpty()) {
+        String message = buildThisIsMessage(name, context);
+        Dialog.show(TITLE_RESULT, message, "OK", null);
+    }
+
+    private String buildResultMessage(Map<String, Object> response) {
+        Object root = (response != null) ? response.get("root") : null;
+        if (!(root instanceof java.util.List)) {
+            return MSG_UNKNOWN_RESULT;
+        }
+
+        @SuppressWarnings("unchecked")
+        java.util.List<Map<String, Object>> list = (java.util.List<Map<String, Object>>) root;
+        if (list.isEmpty()) {
+            return MSG_UNKNOWN_RESULT;
+        }
+
+        Map<String, Object> top = list.get(0);
+        if (top == null) {
+            return MSG_UNKNOWN_RESULT;
+        }
+
+        Object sim = top.get("similarity");
+        Double score = (sim instanceof Number) ? ((Number) sim).doubleValue() : null;
+
+        if (score == null || score <= 0.4) {
+            return MSG_UNKNOWN_RESULT;
+        }
+
+        String name = decodeSafely((String) top.get("name"), "Desconocido");
+        String context = decodeSafely((String) top.get("context"), "");
+
+        return buildThisIsMessage(name, context);
+    }
+
+    private String buildThisIsMessage(String name, String context) {
+        String message = PREFIX_THIS_IS + name;
+        if (context != null && !context.isEmpty()) {
             message += " (" + context + ")";
         }
-        Dialog.show(TITLE_RESULT, message, "OK", null);
+        return message;
     }
 
     private byte[] decodeBase64Bytes(Object audioDataObj) {
@@ -116,36 +155,6 @@ public class PatientDashboard extends Form {
         } catch (Exception ignored) {
             return new byte[0];
         }
-    }
-
-    private String buildResultMessage(Map<String, Object> response) {
-        Object root = (response != null) ? response.get("root") : null;
-        if (!(root instanceof java.util.List)) {
-            return "Result: Desconocido";
-        }
-
-        @SuppressWarnings("unchecked")
-        java.util.List<Map<String, Object>> list = (java.util.List<Map<String, Object>>) root;
-        if (list.isEmpty()) {
-            return "Result: Desconocido";
-        }
-
-        Map<String, Object> top = list.get(0);
-        if (top == null) {
-            return "Result: Desconocido";
-        }
-
-        Object sim = top.get("similarity");
-        Double score = (sim instanceof Number) ? ((Number) sim).doubleValue() : null;
-
-        if (score == null || score <= 0.4) {
-            return "Result: Desconocido";
-        }
-
-        String name = decodeSafely((String) top.get("name"), "Desconocido");
-        String context = decodeSafely((String) top.get("context"), "");
-
-        return context.isEmpty() ? ("This is " + name) : ("This is " + name + " (" + context + ")");
     }
 
     private String decodeSafely(String value, String fallback) {

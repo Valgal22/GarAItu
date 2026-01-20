@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <groupId>me.sebz.mu.pbl5</groupId>
         <artifactId>memorylens</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
+
     <groupId>me.sebz.mu.pbl5</groupId>
     <artifactId>memorylens-common</artifactId>
     <version>1.0-SNAPSHOT</version>
@@ -52,45 +56,45 @@
         <!-- A profile to install Codename One support libraries to your home directory
             if they aren't installed yet. -->
         <profile>
-        <id>install-codenameone</id>
-        <activation><file><missing>${user.home}/.codenameone/guibuilder.jar</missing></file></activation>
-        <build>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-antrun-plugin</artifactId>
+            <id>install-codenameone</id>
+            <activation>
+                <file>
+                    <missing>${user.home}/.codenameone/guibuilder.jar</missing>
+                </file>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target name="install-cn1">
+                                        <available file="${user.home}/.codenameone/guibuilder.jar" property="codenameone.present"/>
+                                        <mkdir dir="${user.home}/.codenameone"/>
+                                        <mkdir dir="${project.build.directory}/codenameone/tmpProject"/>
+                                        <get src="https://www.codenameone.com/files/updates/UpdateCodenameOne.jar"
+                                             dest="${user.home}/UpdateCodenameOne.jar"
+                                             skipexisting="true"/>
+                                        <java jar="${user.home}/UpdateCodenameOne.jar" fork="true">
+                                            <arg value="${project.build.directory}/codenameone/tmpProject"/>
+                                            <arg value="force"/>
+                                        </java>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
 
-                    <executions>
-                        <execution>
-                            <phase>validate</phase>
-                            <goals>
-                                <goal>run</goal>
-                            </goals>
-                            <configuration>
-
-                                <target name="install-cn1">
-                                    <available file="${user.home}/.codenameone/guibuilder.jar" property="codenameone.present"/>
-
-                                    <mkdir dir="${user.home}/.codenameone"/>
-                                    <mkdir dir="${project.build.directory}/codenameone/tmpProject"/>
-                                    <get src="https://www.codenameone.com/files/updates/UpdateCodenameOne.jar"
-                                         dest="${user.home}/UpdateCodenameOne.jar"
-                                         skipexisting="true"/>
-                                    <java jar="${user.home}/UpdateCodenameOne.jar" fork="true">
-                                        <arg value="${project.build.directory}/codenameone/tmpProject"/>
-                                        <arg value="force"/>
-                                    </java>
-                                </target>
-                            </configuration>
-                        </execution>
-                    </executions>
-                </plugin>
-            </plugins>
-        </build>
-
-    </profile>
-        <!-- A profile to add kotlin support.  Activated if the src/main/kotlin
-            directory exists -->
+        <!-- A profile to add kotlin support.  Activated if the src/main/kotlin directory exists -->
         <profile>
             <id>kotlin</id>
             <activation>
@@ -109,9 +113,6 @@
                     <artifactId>kotlin-stdlib</artifactId>
                     <version>${kotlin.version}</version>
                 </dependency>
-        
-                <!-- https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-annotations-jvm -->
-                <!-- https://mvnrepository.com/artifact/org.jetbrains/annotations -->
                 <dependency>
                     <groupId>org.jetbrains</groupId>
                     <artifactId>annotations</artifactId>
@@ -160,14 +161,14 @@
                                     </sourceDirs>
                                     <args>
                                         <arg>-no-reflect</arg>
-                                        <arg>-no-jdk</arg> <!-- No JDK -->
+                                        <arg>-no-jdk</arg>
                                     </args>
                                 </configuration>
                             </execution>
                             <execution>
                                 <id>test-compile</id>
-                                <goals> 
-                                    <goal>test-compile</goal> 
+                                <goals>
+                                    <goal>test-compile</goal>
                                 </goals>
                                 <configuration>
                                     <sourceDirs>
@@ -176,7 +177,7 @@
                                     </sourceDirs>
                                     <args>
                                         <arg>-no-reflect</arg>
-                                        <arg>-no-jdk</arg> <!-- No JDK -->
+                                        <arg>-no-jdk</arg>
                                     </args>
                                 </configuration>
                             </execution>
@@ -185,10 +186,8 @@
                 </plugins>
             </build>
         </profile>
-        
 
         <profile>
-            
             <id>javase</id>
             <activation>
                 <property>
@@ -209,10 +208,8 @@
                             <longClasspath>true</longClasspath>
                             <arguments>
                                 <argument>-Xmx1024M</argument>
-                                <!--<argument>-Xdebug</argument>
-                                <argument>-Xrunjdwp:transport=dt_socket,address=8888,server=y,suspend=n</argument>-->
                                 <argument>-classpath</argument>
-                                <classpath />
+                                <classpath/>
                                 <argument>${exec.mainClass}</argument>
                                 <argument>${cn1.mainClass}</argument>
                             </arguments>
@@ -221,100 +218,65 @@
                 </plugins>
             </build>
         </profile>
+
         <profile>
-            <!-- 
-                For running in simulator in process use:
-                mvn cn1:java -P simulator
-                            
-                Fro running in simulator in forked process use:
-                mvn cn1:simulator -P simulator
-            -->
-                
             <id>simulator</id>
             <properties>
                 <codename1.targetPlatform>javase</codename1.targetPlatform>
             </properties>
-            
         </profile>
+
         <profile>
-            <!--
-                For sending iOS debug builds use:
-                mvn cn:build -P ios-debug
-            -->
             <id>ios-debug</id>
             <properties>
-                <!-- Build server target type -->
                 <codename1.targetType>iphone</codename1.targetType>
-                
-                <!-- Used for identifying native interfaces.  Should match correct subdirectory of native -->
                 <codename1.targetPlatform>ios</codename1.targetPlatform>
             </properties>
         </profile>
+
         <profile>
-            <!--
-                For sending iOS debug builds use:
-                mvn cn:build -P ios-release
-            -->
             <id>ios-release</id>
             <properties>
-                <!-- Build server target type -->
                 <codename1.targetType>iphone</codename1.targetType>
                 <codename1.production>true</codename1.production>
-                
-                <!-- Used for identifying native interfaces.  Should match correct subdirectory of native -->
                 <codename1.targetPlatform>ios</codename1.targetPlatform>
                 <codename1.appStoreBuild>true</codename1.appStoreBuild>
             </properties>
         </profile>
+
         <profile>
-            <!--
-                For sending Javascript builds use:
-                mvn cn:build -P javascript
-            -->
             <id>javascript</id>
             <properties>
                 <codename1.targetType>javascript</codename1.targetType>
                 <codename1.targetPlatform>javascript</codename1.targetPlatform>
             </properties>
         </profile>
+
         <profile>
-            <!--
-                For sending Android builds use:
-                mvn cn:build -P android
-            -->
             <id>android</id>
             <properties>
                 <codename1.targetType>android</codename1.targetType>
                 <codename1.targetPlatform>android</codename1.targetPlatform>
             </properties>
         </profile>
+
         <profile>
-            <!--
-                For sending Windows UWP builds use:
-                mvn cn:build -P uwp
-            -->
             <id>uwp</id>
             <properties>
                 <codename1.targetType>windows</codename1.targetType>
                 <codename1.targetPlatform>win</codename1.targetPlatform>
             </properties>
         </profile>
+
         <profile>
-            <!--
-                For sending Windows desktop builds use:
-                mvn cn:build -P windows
-            -->
             <id>windows</id>
             <properties>
                 <codename1.targetType>desktop_windows</codename1.targetType>
                 <codename1.targetPlatform>javase</codename1.targetPlatform>
             </properties>
         </profile>
+
         <profile>
-            <!--
-                For sending Mac Desktop builds use:
-                mvn cn:build -P mac
-            -->
             <id>mac</id>
             <properties>
                 <codename1.targetType>desktop_macosx</codename1.targetType>
@@ -333,6 +295,7 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
+
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>properties-maven-plugin</artifactId>
@@ -355,7 +318,6 @@
             <plugin>
                 <groupId>com.codenameone</groupId>
                 <artifactId>codenameone-maven-plugin</artifactId>
-
                 <executions>
                     <execution>
                         <id>generate-gui-sources</id>
@@ -368,9 +330,7 @@
                         <id>cn1-process-classes</id>
                         <phase>process-classes</phase>
                         <goals>
-                            <!--<goal>compliance-check</goal>-->
                             <goal>css</goal>
-                            <!--<goal>compile-javase-sources</goal>-->
                         </goals>
                     </execution>
                     <execution>
@@ -381,20 +341,13 @@
                         </goals>
                     </execution>
                 </executions>
-
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <!-- <skipTests>true</skipTests> -->
-                </configuration>
+                <configuration/>
             </plugin>
-
         </plugins>
-
-
     </build>
-
-    
 </project>

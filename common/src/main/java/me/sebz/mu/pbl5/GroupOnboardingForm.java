@@ -1,11 +1,24 @@
 package me.sebz.mu.pbl5;
 
-import com.codename1.ui.*;
-import com.codename1.ui.layouts.*;
+import com.codename1.ui.Button;
+import com.codename1.ui.Command;
+import com.codename1.ui.Container;
+import com.codename1.ui.Dialog;
+import com.codename1.ui.Display;
+import com.codename1.ui.FontImage;
+import com.codename1.ui.Form;
+import com.codename1.ui.Label;
+import com.codename1.ui.TextArea;
+import com.codename1.ui.TextField;
+import com.codename1.ui.layouts.BorderLayout;
+import com.codename1.ui.layouts.BoxLayout;
+
 import java.util.HashMap;
 import java.util.Map;
 
 public class GroupOnboardingForm extends Form {
+
+    private static final String TITLE_ERROR = "Error";
 
     public GroupOnboardingForm() {
         super("Welcome", new BorderLayout());
@@ -20,7 +33,7 @@ public class GroupOnboardingForm extends Form {
         Label info = new Label("To proceed, you need to join a family group.");
         info.setUIID("Label");
 
-        TextField inviteCodeField = new TextField("", "Invite Code", 20, TextField.ANY);
+        TextField inviteCodeField = new TextField("", "Invite Code", 20, TextArea.ANY);
         inviteCodeField.setUIID("TextField");
 
         Button joinButton = new Button("Join with Code");
@@ -29,7 +42,7 @@ public class GroupOnboardingForm extends Form {
         joinButton.addActionListener(e -> {
             String code = inviteCodeField.getText();
             if (code.isEmpty()) {
-                Dialog.show("Error", "Please enter an invite code", "OK", null);
+                Dialog.show(TITLE_ERROR, "Please enter an invite code", "OK", null);
                 return;
             }
 
@@ -40,7 +53,6 @@ public class GroupOnboardingForm extends Form {
                     new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                         @Override
                         public void onSuccess(Map<String, Object> response) {
-                            // After joining, we might need to refresh user data or just go to dashboard
                             Object fgIdObj = response.get("familyGroupId");
                             Long fgId = (fgIdObj instanceof Number) ? ((Number) fgIdObj).longValue() : null;
                             MemoryLens.setFamilyGroupId(fgId);
@@ -53,9 +65,9 @@ public class GroupOnboardingForm extends Form {
 
                         @Override
                         public void onFailure(String errorMessage) {
-                            Display.getInstance().callSerially(() -> {
-                                Dialog.show("Error", "Could not join: " + errorMessage, "OK", null);
-                            });
+                            Display.getInstance().callSerially(() ->
+                                    Dialog.show(TITLE_ERROR, "Could not join: " + errorMessage, "OK", null)
+                            );
                         }
                     });
         });
@@ -66,10 +78,7 @@ public class GroupOnboardingForm extends Form {
         center.add(inviteCodeField);
         center.add(joinButton);
 
-        // For caregivers/admins, allow creating a group
         String role = MemoryLens.getUserRole();
-        // Allow if role is 0 (Admin) or explicit ADMIN string.
-        // Handle "0.0" as seen in previous issues.
         boolean isAdmin = "0".equals(role) || "0.0".equals(role) || "ADMIN".equalsIgnoreCase(role);
 
         if (isAdmin) {
@@ -82,45 +91,48 @@ public class GroupOnboardingForm extends Form {
             center.add(createButton);
         }
 
-        this.add(BorderLayout.CENTER, center);
+        add(BorderLayout.CENTER, center);
     }
 
     private void showCreateGroupDialog() {
-        TextField groupNameField = new TextField("", "Group Name (e.g. Smith Family)", 20, TextField.ANY);
+        TextField groupNameField = new TextField("", "Group Name (e.g. Smith Family)", 20, TextArea.ANY);
         Command ok = new Command("Create");
         Command cancel = new Command("Cancel");
-        if (Dialog.show("Create Group", groupNameField, ok, cancel) == ok) {
-            String name = groupNameField.getText();
-            if (name.isEmpty())
-                return;
 
-            Map<String, Object> data = new HashMap<>();
-            data.put("name", name);
-
-            GenericNetworkService.getInstance().post("/api/groups/create", data,
-                    new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
-                        @Override
-                        public void onSuccess(Map<String, Object> response) {
-                            Object fgIdObj = response.get("id");
-                            Long fgId = (fgIdObj instanceof Number) ? ((Number) fgIdObj).longValue() : null;
-                            MemoryLens.setFamilyGroupId(fgId);
-                            // Set role to ADMIN (0) since creator is admin
-                            MemoryLens.setUserRole("0");
-
-                            Display.getInstance().callSerially(() -> {
-                                Dialog.show("Success", "Group created successfully!", "OK", null);
-                                navigateToDashboard();
-                            });
-                        }
-
-                        @Override
-                        public void onFailure(String errorMessage) {
-                            Display.getInstance().callSerially(() -> {
-                                Dialog.show("Error", "Creation failed: " + errorMessage, "OK", null);
-                            });
-                        }
-                    });
+        if (Dialog.show("Create Group", groupNameField, ok, cancel) != ok) {
+            return;
         }
+
+        String name = groupNameField.getText();
+        if (name.isEmpty()) {
+            return;
+        }
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", name);
+
+        GenericNetworkService.getInstance().post("/api/groups/create", data,
+                new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
+                    @Override
+                    public void onSuccess(Map<String, Object> response) {
+                        Object fgIdObj = response.get("id");
+                        Long fgId = (fgIdObj instanceof Number) ? ((Number) fgIdObj).longValue() : null;
+                        MemoryLens.setFamilyGroupId(fgId);
+                        MemoryLens.setUserRole("0");
+
+                        Display.getInstance().callSerially(() -> {
+                            Dialog.show("Success", "Group created successfully!", "OK", null);
+                            navigateToDashboard();
+                        });
+                    }
+
+                    @Override
+                    public void onFailure(String errorMessage) {
+                        Display.getInstance().callSerially(() ->
+                                Dialog.show(TITLE_ERROR, "Creation failed: " + errorMessage, "OK", null)
+                        );
+                    }
+                });
     }
 
     private void navigateToDashboard() {

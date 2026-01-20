@@ -1,12 +1,18 @@
-<?xml version="1.0" encoding="UTF-8"?><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+
   <groupId>me.sebz.mu.pbl5</groupId>
   <artifactId>memorylens</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
+
   <name>memorylens</name>
   <description>memorylens</description>
   <url>https://www.codenameone.com</url>
+
   <licenses>
     <license>
       <name>GPL v2 With Classpath Exception</name>
@@ -15,9 +21,11 @@
       <comments>A business-friendly OSS license</comments>
     </license>
   </licenses>
+
   <modules>
-<module>common</module>
-</modules>
+    <module>common</module>
+  </modules>
+
   <properties>
     <cn1.plugin.version>7.0.175</cn1.plugin.version>
     <cn1.version>LATEST</cn1.version>
@@ -31,6 +39,7 @@
     <kotlin.compiler.jvmTarget>1.8</kotlin.compiler.jvmTarget>
     <cn1app.name>memorylens</cn1app.name>
   </properties>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -38,25 +47,29 @@
         <artifactId>java-runtime</artifactId>
         <version>${cn1.version}</version>
       </dependency>
+
       <dependency>
         <groupId>com.codenameone</groupId>
         <artifactId>codenameone-core</artifactId>
         <version>${cn1.version}</version>
       </dependency>
+
       <dependency>
         <groupId>com.codenameone</groupId>
         <artifactId>codenameone-javase</artifactId>
         <version>${cn1.version}</version>
       </dependency>
+
+      <!-- Fixed: remove system scope + systemPath (avoids lock-in/reliability issue) -->
       <dependency>
         <groupId>com.codenameone</groupId>
         <artifactId>codenameone-buildclient</artifactId>
         <version>${cn1.version}</version>
-        <scope>system</scope>
-        <systemPath>${user.home}/.codenameone/CodeNameOneBuildClient.jar</systemPath>
+        <scope>provided</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
+
   <build>
     <pluginManagement>
       <plugins>
@@ -65,29 +78,34 @@
           <artifactId>codenameone-maven-plugin</artifactId>
           <version>${cn1.plugin.version}</version>
         </plugin>
+
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>${maven-compiler-plugin.version}</version>
         </plugin>
+
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>exec-maven-plugin</artifactId>
           <version>3.0.0</version>
         </plugin>
+
         <plugin>
-          <artifactId>maven-antrun-plugin</artifactId>
           <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-antrun-plugin</artifactId>
           <version>3.1.0</version>
         </plugin>
       </plugins>
     </pluginManagement>
+
     <plugins>
       <plugin>
         <groupId>com.codenameone</groupId>
         <artifactId>codenameone-maven-plugin</artifactId>
         <version>${cn1.plugin.version}</version>
       </plugin>
+
       <!--
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -104,8 +122,10 @@
       -->
     </plugins>
   </build>
+
   <repositories/>
   <pluginRepositories/>
+
   <profiles>
     <profile>
       <id>javascript</id>
@@ -119,6 +139,7 @@
         <module>javascript</module>
       </modules>
     </profile>
+
     <profile>
       <id>ios</id>
       <activation>
@@ -131,6 +152,7 @@
         <module>ios</module>
       </modules>
     </profile>
+
     <profile>
       <id>win</id>
       <activation>
@@ -143,6 +165,7 @@
         <module>win</module>
       </modules>
     </profile>
+
     <profile>
       <id>android</id>
       <activation>
@@ -155,6 +178,7 @@
         <module>android</module>
       </modules>
     </profile>
+
     <profile>
       <id>javase</id>
       <activation>
@@ -168,6 +192,7 @@
         <module>javase</module>
       </modules>
     </profile>
+
     <profile>
       <id>cn1libs</id>
       <activation>

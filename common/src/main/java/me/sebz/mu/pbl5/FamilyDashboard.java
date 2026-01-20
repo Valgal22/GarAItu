@@ -2,7 +2,18 @@ package me.sebz.mu.pbl5;
 
 import com.codename1.capture.Capture;
 import com.codename1.components.ToastBar;
-import com.codename1.ui.*;
+import com.codename1.ui.Button;
+import com.codename1.ui.ComboBox;
+import com.codename1.ui.Command;
+import com.codename1.ui.Container;
+import com.codename1.ui.Dialog;
+import com.codename1.ui.Display;
+import com.codename1.ui.FontImage;
+import com.codename1.ui.Form;
+import com.codename1.ui.Image;
+import com.codename1.ui.Label;
+import com.codename1.ui.TextArea;
+import com.codename1.ui.TextField;
 import com.codename1.ui.layouts.BoxLayout;
 
 import java.io.IOException;
@@ -10,6 +21,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class FamilyDashboard extends Form {
+
+    private static final String TITLE_ERROR = "Error";
 
     // Registration UI Fields
     private TextField nameField;
@@ -23,21 +36,18 @@ public class FamilyDashboard extends Form {
 
     public FamilyDashboard() {
         super("Loading...", BoxLayout.y());
-        this.setScrollableY(true);
+        setScrollableY(true);
 
-        // Initial Loading UI
-        this.add(new Label("Loading Profile..."));
+        add(new Label("Loading Profile..."));
 
-        // Fetch fresh status from server
         checkEmbeddingStatus();
     }
 
     private void checkEmbeddingStatus() {
         Long groupId = MemoryLens.getFamilyGroupId();
-        Long memberId = MemoryLens.getMemberId(); // Logged in user
+        Long memberId = MemoryLens.getMemberId();
 
         if (groupId == null || memberId == null) {
-            // Fallback if missing IDs (shouldn't happen on fresh login)
             showRegistrationForm();
             return;
         }
@@ -46,61 +56,66 @@ public class FamilyDashboard extends Form {
                 new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                     @Override
                     public void onSuccess(Map<String, Object> response) {
-                        java.util.List<Map<String, Object>> list;
-                        if (response.containsKey("root")) {
-                            list = (java.util.List<Map<String, Object>>) response.get("root");
-                        } else {
-                            list = null;
-                        }
+                        java.util.List<Map<String, Object>> list = extractMemberList(response);
+                        boolean myEmbeddingStatus = extractMyEmbeddingStatus(list, memberId);
 
-                        boolean foundSelf = false;
-                        boolean myEmbeddingStatus = false;
-
-                        if (list != null) {
-                            for (Map<String, Object> member : list) {
-                                // Check if this is me
-                                Object mIdObj = member.get("id");
-                                String mIdStr = String.valueOf(mIdObj);
-
-                                // Safe compare (handle "9.0" vs "9")
-                                if (areIdsEqual(mIdStr, String.valueOf(memberId))) {
-                                    foundSelf = true;
-                                    Object heObj = member.get("hasEmbedding");
-                                    if (heObj instanceof Boolean)
-                                        myEmbeddingStatus = (Boolean) heObj;
-                                    else if (heObj != null)
-                                        myEmbeddingStatus = Boolean.parseBoolean(String.valueOf(heObj));
-                                    break;
-                                }
-                            }
-                        }
-
-                        final boolean finalStatus = myEmbeddingStatus;
-
-                        Display.getInstance().callSerially(() -> {
-                            MemoryLens.setHasEmbedding(finalStatus);
-                            if (finalStatus) {
-                                showMemberListView();
-                            } else {
-                                showRegistrationForm();
-                            }
-                        });
+                        Display.getInstance().callSerially(() -> applyEmbeddingStatus(myEmbeddingStatus));
                     }
 
                     @Override
                     public void onFailure(String errorMessage) {
                         Display.getInstance().callSerially(() -> {
                             ToastBar.showErrorMessage("Failed to check status: " + errorMessage);
-                            // Fallback
                             showRegistrationForm();
                         });
                     }
                 });
     }
 
-    private boolean areIdsEqual(String id1, String id2) {
-        if (id1 == null || id2 == null)
+    private void applyEmbeddingStatus(boolean hasEmbedding) {
+        MemoryLens.setHasEmbedding(hasEmbedding);
+        if (hasEmbedding) {
+            showMemberListView();
+        } else {
+            showRegistrationForm();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private java.util.List<Map<String, Object>> extractMemberList(Map<String, Object> response) {
+        Object root = (response != null) ? response.get("root") : null;
+        if (root instanceof java.util.List) {
+            return (java.util.List<Map<String, Object>>) root;
+        }
+        return null;
+    }
+
+    private boolean extractMyEmbeddingStatus(java.util.List<Map<String, Object>> list, Long memberId) {
+        if (list == null || memberId == null) {
             return false;
+        }
+
+        String myId = String.valueOf(memberId);
+        for (Map<String, Object> member : list) {
+            String mIdStr = String.valueOf(member.get("id"));
+            if (areIdsEqual(mIdStr, myId)) {
+                return parseBoolean(member.get("hasEmbedding"));
+            }
+        }
+        return false;
+    }
+
+    private boolean parseBoolean(Object value) {
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        }
+        return value != null && Boolean.parseBoolean(String.valueOf(value));
+    }
+
+    private boolean areIdsEqual(String id1, String id2) {
+        if (id1 == null || id2 == null) {
+            return false;
+        }
         try {
             double d1 = Double.parseDouble(id1);
             double d2 = Double.parseDouble(id2);
@@ -116,13 +131,13 @@ public class FamilyDashboard extends Form {
      * ==========================
      */
     private void showRegistrationForm() {
-        this.removeAll();
-        this.setTitle("Add Your Profile");
+        removeAll();
+        setTitle("Add Your Profile");
 
         Label title = new Label("Register Face");
         title.setUIID("Title");
 
-        nameField = new TextField("", "Name", 20, TextField.ANY);
+        nameField = new TextField("", "Name", 20, TextArea.ANY);
         relationshipPicker = new ComboBox<>("Spouse", "Child", "Sibling", "Friend", "Caregiver");
         contextArea = new TextArea(5, 20);
         contextArea.setHint("Context (e.g., 'This is your daughter Sarah')");
@@ -150,9 +165,9 @@ public class FamilyDashboard extends Form {
         content.add(imageLabel);
         content.add(uploadButton);
 
-        this.add(content);
+        add(content);
         addLogoutButton();
-        this.revalidate();
+        revalidate();
     }
 
     /*
@@ -161,44 +176,40 @@ public class FamilyDashboard extends Form {
      * ==========================
      */
     private void showMemberListView() {
-        this.removeAll();
-        this.setTitle("Family Group");
+        removeAll();
+        setTitle("Family Group");
 
-        this.add(new Label("Group Members"));
+        add(new Label("Group Members"));
 
         memberListContainer = new Container(BoxLayout.y());
-        this.add(memberListContainer);
+        add(memberListContainer);
 
         Button refreshButton = new Button("Refresh");
         refreshButton.addActionListener(e -> fetchMembers());
-        this.add(refreshButton);
+        add(refreshButton);
 
         Button editProfileButton = new Button("Edit My Profile");
         editProfileButton.setMaterialIcon(FontImage.MATERIAL_EDIT, 5);
         editProfileButton.addActionListener(e -> showEditProfileDialog());
-        this.add(editProfileButton);
+        add(editProfileButton);
 
         addLogoutButton();
 
-        this.show();
+        show();
         fetchMembers();
     }
 
     private void fetchMembers() {
         Long groupId = MemoryLens.getFamilyGroupId();
-        if (groupId == null)
+        if (groupId == null) {
             return;
+        }
 
         GenericNetworkService.getInstance().get("/api/group/" + groupId + "/member",
                 new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                     @Override
                     public void onSuccess(Map<String, Object> response) {
-                        java.util.List<Map<String, Object>> list;
-                        if (response.containsKey("root")) {
-                            list = (java.util.List<Map<String, Object>>) response.get("root");
-                        } else {
-                            list = null;
-                        }
+                        java.util.List<Map<String, Object>> list = extractMemberList(response);
 
                         Display.getInstance().callSerially(() -> {
                             memberListContainer.removeAll();
@@ -215,27 +226,30 @@ public class FamilyDashboard extends Form {
 
                     @Override
                     public void onFailure(String errorMessage) {
-                        Display.getInstance()
-                                .callSerially(() -> ToastBar.showErrorMessage("Load failed: " + errorMessage));
+                        Display.getInstance().callSerially(() ->
+                                ToastBar.showErrorMessage("Load failed: " + errorMessage)
+                        );
                     }
                 });
     }
 
     private void addMemberRow(Map<String, Object> member) {
         String name = (String) member.get("username");
-        if (name == null)
+        if (name == null) {
             name = (String) member.get("email");
+        }
 
         Object roleObj = member.get("role");
         String roleName = "Unknown";
         String rStr = String.valueOf(roleObj);
 
-        if ("0.0".equals(rStr) || "0".equals(rStr))
+        if ("0.0".equals(rStr) || "0".equals(rStr)) {
             roleName = "Admin";
-        else if ("1.0".equals(rStr) || "1".equals(rStr))
+        } else if ("1.0".equals(rStr) || "1".equals(rStr)) {
             roleName = "Patient";
-        else if ("2.0".equals(rStr) || "2".equals(rStr))
+        } else if ("2.0".equals(rStr) || "2".equals(rStr)) {
             roleName = "Family Member";
+        }
 
         Container row = new Container(new com.codename1.ui.layouts.BorderLayout());
         row.setUIID("MemberRow");
@@ -248,10 +262,10 @@ public class FamilyDashboard extends Form {
 
     private void showEditProfileDialog() {
         Form editForm = new Form("Edit Profile", BoxLayout.y());
-        TextField editName = new TextField("", "Name", 20, TextField.ANY);
+        TextField editName = new TextField("", "Name", 20, TextArea.ANY);
         TextArea editContext = new TextArea(3, 20);
         Label imgReminder = new Label("Image: Already Registered (Face Embedding Set)");
-        imgReminder.getAllStyles().setFgColor(0x008000); // Green
+        imgReminder.getAllStyles().setFgColor(0x008000);
 
         editForm.add(new Label("Name:"));
         editForm.add(editName);
@@ -265,15 +279,13 @@ public class FamilyDashboard extends Form {
             String newContext = editContext.getText();
 
             if (newName.isEmpty()) {
-                Dialog.show("Error", "Name cannot be empty", "OK", null);
+                Dialog.show(TITLE_ERROR, "Name cannot be empty", "OK", null);
                 return;
             }
 
             Map<String, Object> updateData = new HashMap<>();
             updateData.put("name", newName);
             updateData.put("context", newContext);
-            // Relationship is removed as requested by user
-            // groupId is removed as requested by user (only name and context)
 
             GenericNetworkService.getInstance().put("/garAItu/member/" + MemoryLens.getMemberId(), updateData,
                     new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
@@ -287,9 +299,9 @@ public class FamilyDashboard extends Form {
 
                         @Override
                         public void onFailure(String errorMessage) {
-                            Display.getInstance().callSerially(() -> {
-                                Dialog.show("Error", "Update failed: " + errorMessage, "OK", null);
-                            });
+                            Display.getInstance().callSerially(() ->
+                                    Dialog.show(TITLE_ERROR, "Update failed: " + errorMessage, "OK", null)
+                            );
                         }
                     });
         });
@@ -310,21 +322,23 @@ public class FamilyDashboard extends Form {
         Button logoutButton = new Button("Logout");
         logoutButton.setUIID("ButtonSecondary");
         logoutButton.addActionListener(e -> MemoryLens.logout());
-        this.add(logoutButton);
+        add(logoutButton);
     }
 
     private void capturePhoto() {
         String filePath = Capture.capturePhoto(1024, -1);
-        if (filePath != null) {
-            imagePath = filePath;
-            try {
-                Image img = Image.createImage(filePath);
-                imageLabel.setIcon(img.scaled(300, 300));
-                imageLabel.setText("");
-                this.revalidate();
-            } catch (IOException e) {
-                ToastBar.showErrorMessage("Error: " + e.getMessage());
-            }
+        if (filePath == null) {
+            return;
+        }
+
+        imagePath = filePath;
+        try {
+            Image img = Image.createImage(filePath);
+            imageLabel.setIcon(img.scaled(300, 300));
+            imageLabel.setText("");
+            revalidate();
+        } catch (IOException e) {
+            ToastBar.showErrorMessage(TITLE_ERROR + ": " + e.getMessage());
         }
     }
 
@@ -343,7 +357,7 @@ public class FamilyDashboard extends Form {
         Long gId = MemoryLens.getFamilyGroupId();
 
         if (mId == null || gId == null) {
-            Dialog.show("Error", "Session invalid. Login again.", "OK", null);
+            Dialog.show(TITLE_ERROR, "Session invalid. Login again.", "OK", null);
             return;
         }
 
@@ -363,7 +377,9 @@ public class FamilyDashboard extends Form {
 
                     @Override
                     public void onFailure(String errorMessage) {
-                        Display.getInstance().callSerially(() -> Dialog.show("Error", errorMessage, "OK", null));
+                        Display.getInstance().callSerially(() ->
+                                Dialog.show(TITLE_ERROR, errorMessage, "OK", null)
+                        );
                     }
                 });
     }

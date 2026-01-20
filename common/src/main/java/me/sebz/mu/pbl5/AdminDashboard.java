@@ -9,12 +9,19 @@ import com.codename1.ui.FontImage;
 import com.codename1.ui.Form;
 import com.codename1.ui.Label;
 import com.codename1.ui.layouts.BoxLayout;
+import me.sebz.mu.pbl5.ui.MemberListUiHelper;
+import me.sebz.mu.pbl5.util.MemberRoleUtil;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public class AdminDashboard extends Form {
 
     private static final String TITLE_ERROR = "Error";
+    private static final String TITLE_CONFIRM = "Confirm";
+    private static final String EMPTY_MEMBERS_MSG = "No members found.";
+    private static final String MSG_LOAD_FAILED_PREFIX = "Failed to load members: ";
 
     private Container memberListContainer;
 
@@ -55,34 +62,27 @@ public class AdminDashboard extends Form {
         GenericNetworkService.getInstance().get("/api/group/" + groupId + "/member",
                 new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                     @Override
+                    @SuppressWarnings("unchecked")
                     public void onSuccess(Map<String, Object> response) {
-                        System.out.println("DEBUG: Members Response: " + response);
-
-                        java.util.List<Map<String, Object>> list;
-                        if (response.containsKey("root")) {
-                            list = (java.util.List<Map<String, Object>>) response.get("root");
+                        List<Map<String, Object>> list;
+                        Object root = (response != null) ? response.get("root") : null;
+                        if (root instanceof List) {
+                            list = (List<Map<String, Object>>) root;
                         } else {
-                            list = null;
+                            list = Collections.emptyList();
                         }
 
-                        Display.getInstance().callSerially(() -> {
-                            memberListContainer.removeAll();
-                            if (list != null) {
-                                for (Map<String, Object> member : list) {
-                                    addMemberRow(member);
-                                }
-                            } else {
-                                memberListContainer.add(new Label("No members found."));
-                            }
-                            memberListContainer.revalidate();
-                        });
+                        MemberListUiHelper.renderMembers(
+                                memberListContainer,
+                                list,
+                                AdminDashboard.this::addMemberRow,
+                                EMPTY_MEMBERS_MSG
+                        );
                     }
 
                     @Override
                     public void onFailure(String errorMessage) {
-                        Display.getInstance().callSerially(() ->
-                                ToastBar.showErrorMessage("Failed to load members: " + errorMessage)
-                        );
+                        MemberListUiHelper.showLoadError(MSG_LOAD_FAILED_PREFIX, errorMessage);
                     }
                 });
     }
@@ -92,28 +92,14 @@ public class AdminDashboard extends Form {
         if (rawName == null) {
             rawName = (String) member.get("email");
         }
-
         final String name = (rawName != null) ? rawName : "Unknown";
 
-        Object roleObj = member.get("role"); // 0=Admin, 1=Patient, 2=Family
-        String roleName = "Unknown";
-        String rStr = String.valueOf(roleObj);
-
-        if ("0.0".equals(rStr)) {
-            roleName = "Admin";
-        } else if ("1.0".equals(rStr)) {
-            roleName = "Patient";
-        } else if ("2.0".equals(rStr)) {
-            roleName = "Family Member";
-        }
+        String roleName = MemberRoleUtil.roleNameFrom(member.get("role"));
 
         Object mIdObj = member.get("id");
-        final String memberId;
-        if (mIdObj instanceof Number) {
-            memberId = String.valueOf(((Number) mIdObj).longValue());
-        } else {
-            memberId = String.valueOf(mIdObj);
-        }
+        final String memberId = (mIdObj instanceof Number)
+                ? String.valueOf(((Number) mIdObj).longValue())
+                : String.valueOf(mIdObj);
 
         Container row = new Container(new com.codename1.ui.layouts.BorderLayout());
         row.setUIID("MemberRow");
@@ -127,10 +113,11 @@ public class AdminDashboard extends Form {
         }
 
         Label nameLabel = new Label(info);
+
         Button deleteBtn = new Button();
         deleteBtn.setMaterialIcon(FontImage.MATERIAL_DELETE, 4);
         deleteBtn.addActionListener(e -> {
-            boolean confirm = Dialog.show("Confirm", "Delete " + name + "?", "Yes", "No");
+            boolean confirm = Dialog.show(TITLE_CONFIRM, "Delete " + name + "?", "Yes", "No");
             if (confirm) {
                 deleteMember(memberId);
             }

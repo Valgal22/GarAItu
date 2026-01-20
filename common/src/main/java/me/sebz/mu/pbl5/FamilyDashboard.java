@@ -15,6 +15,8 @@ import com.codename1.ui.Label;
 import com.codename1.ui.TextArea;
 import com.codename1.ui.TextField;
 import com.codename1.ui.layouts.BoxLayout;
+import me.sebz.mu.pbl5.ui.MemberListUiHelper;
+import me.sebz.mu.pbl5.util.MemberRoleUtil;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -26,6 +28,8 @@ public class FamilyDashboard extends Form {
 
     private static final String TITLE_ERROR = "Error";
     private static final String TITLE_SUCCESS = "Success";
+    private static final String EMPTY_MEMBERS_MSG = "No members found.";
+    private static final String MSG_LOAD_FAILED_PREFIX = "Load failed: ";
 
     // Registration UI Fields
     private TextField nameField;
@@ -42,7 +46,6 @@ public class FamilyDashboard extends Form {
         setScrollableY(true);
 
         add(new Label("Loading Profile..."));
-
         checkEmbeddingStatus();
     }
 
@@ -61,7 +64,6 @@ public class FamilyDashboard extends Form {
                     public void onSuccess(Map<String, Object> response) {
                         List<Map<String, Object>> list = extractMemberList(response);
                         boolean myEmbeddingStatus = extractMyEmbeddingStatus(list, memberId);
-
                         Display.getInstance().callSerially(() -> applyEmbeddingStatus(myEmbeddingStatus));
                     }
 
@@ -137,6 +139,7 @@ public class FamilyDashboard extends Form {
 
         nameField = new TextField("", "Name", 20, TextArea.ANY);
         relationshipPicker = new ComboBox<>("Spouse", "Child", "Sibling", "Friend", "Caregiver");
+
         contextArea = new TextArea(5, 20);
         contextArea.setHint("Context (e.g., 'This is your daughter Sarah')");
 
@@ -203,24 +206,17 @@ public class FamilyDashboard extends Form {
                     public void onSuccess(Map<String, Object> response) {
                         List<Map<String, Object>> list = extractMemberList(response);
 
-                        Display.getInstance().callSerially(() -> {
-                            memberListContainer.removeAll();
-                            if (!list.isEmpty()) {
-                                for (Map<String, Object> member : list) {
-                                    addMemberRow(member);
-                                }
-                            } else {
-                                memberListContainer.add(new Label("No members found."));
-                            }
-                            memberListContainer.revalidate();
-                        });
+                        MemberListUiHelper.renderMembers(
+                                memberListContainer,
+                                list,
+                                FamilyDashboard.this::addMemberRow,
+                                EMPTY_MEMBERS_MSG
+                        );
                     }
 
                     @Override
                     public void onFailure(String errorMessage) {
-                        Display.getInstance().callSerially(() ->
-                                ToastBar.showErrorMessage("Load failed: " + errorMessage)
-                        );
+                        MemberListUiHelper.showLoadError(MSG_LOAD_FAILED_PREFIX, errorMessage);
                     }
                 });
     }
@@ -231,17 +227,7 @@ public class FamilyDashboard extends Form {
             name = (String) member.get("email");
         }
 
-        Object roleObj = member.get("role");
-        String roleName = "Unknown";
-        String rStr = String.valueOf(roleObj);
-
-        if ("0.0".equals(rStr) || "0".equals(rStr)) {
-            roleName = "Admin";
-        } else if ("1.0".equals(rStr) || "1".equals(rStr)) {
-            roleName = "Patient";
-        } else if ("2.0".equals(rStr) || "2".equals(rStr)) {
-            roleName = "Family Member";
-        }
+        String roleName = MemberRoleUtil.roleNameFrom(member.get("role"));
 
         Container row = new Container(new com.codename1.ui.layouts.BorderLayout());
         row.setUIID("MemberRow");
@@ -254,8 +240,10 @@ public class FamilyDashboard extends Form {
 
     private void showEditProfileDialog() {
         Form editForm = new Form("Edit Profile", BoxLayout.y());
+
         TextField editName = new TextField("", "Name", 20, TextArea.ANY);
         TextArea editContext = new TextArea(3, 20);
+
         Label imgReminder = new Label("Image: Already Registered (Face Embedding Set)");
         imgReminder.getAllStyles().setFgColor(0x008000);
 
@@ -347,7 +335,6 @@ public class FamilyDashboard extends Form {
 
         Long mId = MemoryLens.getMemberId();
         Long gId = MemoryLens.getFamilyGroupId();
-
         if (mId == null || gId == null) {
             Dialog.show(TITLE_ERROR, "Session invalid. Login again.", "OK", null);
             return;

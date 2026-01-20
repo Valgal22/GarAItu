@@ -1,5 +1,8 @@
 package me.sebz.mu.pbl5;
 
+import com.codename1.components.ToastBar;
+import com.codename1.media.Media;
+import com.codename1.media.MediaManager;
 import com.codename1.ui.Button;
 import com.codename1.ui.Container;
 import com.codename1.ui.Dialog;
@@ -14,6 +17,7 @@ import java.util.Map;
 public class PatientDashboard extends Form {
 
     private static final String TITLE_ERROR = "Error";
+    private static final String TITLE_RESULT = "Result";
 
     public PatientDashboard() {
         super("MemoryLens", new BorderLayout());
@@ -27,37 +31,43 @@ public class PatientDashboard extends Form {
         logoutButton.setUIID("ButtonSecondary");
         logoutButton.addActionListener(e -> MemoryLens.logout());
 
-        Container bottomContainer = new Container(new BorderLayout());
-        bottomContainer.add(BorderLayout.CENTER, uploadImageButton);
-        bottomContainer.add(BorderLayout.SOUTH, logoutButton);
+        Container container = new Container(new BorderLayout());
+        container.add(BorderLayout.CENTER, uploadImageButton);
+        container.add(BorderLayout.SOUTH, logoutButton);
 
-        add(BorderLayout.CENTER, bottomContainer);
+        add(BorderLayout.CENTER, container);
     }
 
     private void uploadImage() {
         Display.getInstance().openGallery(e -> {
             if (e == null || e.getSource() == null) {
+                Dialog.show("Info", "No image selected", "OK", null);
                 return;
             }
 
             String filePath = (String) e.getSource();
+            ToastBar.showInfoMessage("Uploading...");
 
-            Map<String, Object> params = new HashMap<>();
             Long groupId = MemoryLens.getFamilyGroupId();
             if (groupId == null) {
                 Dialog.show(TITLE_ERROR, "Group ID is null. Please login again.", "OK", null);
                 return;
             }
+
+            Map<String, Object> params = new HashMap<>();
             params.put("groupId", groupId);
 
             GenericNetworkService.getInstance().upload("/api/recognize", filePath, params,
                     new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                         @Override
                         public void onSuccess(Map<String, Object> response) {
-                            String message = buildResultMessage(response);
-                            Display.getInstance().callSerially(() ->
-                                    Dialog.show("Result", message, "OK", null)
-                            );
+                            Display.getInstance().callSerially(() -> {
+                                if (response != null && response.containsKey("audioData")) {
+                                    handleAudioResponse(response);
+                                    return;
+                                }
+                                Dialog.show(TITLE_RESULT, buildResultMessage(response), "OK", null);
+                            });
                         }
 
                         @Override
@@ -68,6 +78,44 @@ public class PatientDashboard extends Form {
                         }
                     });
         }, Display.GALLERY_IMAGE);
+    }
+
+    private void handleAudioResponse(Map<String, Object> response) {
+        byte[] audioData = decodeBase64Bytes(response.get("audioData"));
+
+        String recognizedPerson = (String) response.get("recognizedPerson");
+        String recognizedContext = (String) response.get("recognizedContext");
+
+        String name = decodeSafely(recognizedPerson, "Desconocido");
+        String context = decodeSafely(recognizedContext, "");
+
+        if (audioData.length > 0) {
+            try {
+                Media m = MediaManager.createMedia(new java.io.ByteArrayInputStream(audioData), "audio/wav", () -> {});
+                if (m != null) {
+                    m.play();
+                }
+            } catch (Exception ignored) {
+                // no debug logs
+            }
+        }
+
+        String message = "This is " + name;
+        if (!context.isEmpty()) {
+            message += " (" + context + ")";
+        }
+        Dialog.show(TITLE_RESULT, message, "OK", null);
+    }
+
+    private byte[] decodeBase64Bytes(Object audioDataObj) {
+        if (!(audioDataObj instanceof String)) {
+            return new byte[0];
+        }
+        try {
+            return java.util.Base64.getDecoder().decode((String) audioDataObj);
+        } catch (Exception ignored) {
+            return new byte[0];
+        }
     }
 
     private String buildResultMessage(Map<String, Object> response) {
@@ -97,10 +145,7 @@ public class PatientDashboard extends Form {
         String name = decodeSafely((String) top.get("name"), "Desconocido");
         String context = decodeSafely((String) top.get("context"), "");
 
-        if (context.isEmpty()) {
-            return "This is " + name;
-        }
-        return "This is " + name + " (" + context + ")";
+        return context.isEmpty() ? ("This is " + name) : ("This is " + name + " (" + context + ")");
     }
 
     private String decodeSafely(String value, String fallback) {

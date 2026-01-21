@@ -1,40 +1,81 @@
 package me.sebz.mu.pbl5;
 
-import com.codename1.ui.*;
-import com.codename1.ui.layouts.*;
-import java.util.HashMap;
-import java.util.Map;
+import com.codename1.ui.Button;
+import com.codename1.ui.ComboBox;
+import com.codename1.ui.Component;
+import com.codename1.ui.Container;
+import com.codename1.ui.Dialog;
+import com.codename1.ui.Display;
+import com.codename1.ui.FontImage;
+import com.codename1.ui.Form;
+import com.codename1.ui.Label;
+import com.codename1.ui.TextArea;
+import com.codename1.ui.TextField;
+import com.codename1.ui.layouts.BorderLayout;
+import com.codename1.ui.layouts.BoxLayout;
+import me.sebz.mu.pbl5.core.auth.AuthGatewayNodeRed;
+import me.sebz.mu.pbl5.core.auth.AuthUseCase;
+import me.sebz.mu.pbl5.core.auth.RegisterRequest;
 
 public class RegistrationForm extends Form {
 
+    private static final String UIID_TEXT_FIELD = "TextField";
+
+    private final AuthUseCase authUseCase =
+            new AuthUseCase(new AuthGatewayNodeRed(GenericNetworkService.getInstance()));
+
     public RegistrationForm() {
         super("Register", new BorderLayout());
+        setName("registerForm");
 
         Container center = new Container(BoxLayout.y());
+        center.setName("registerCenter");
         center.setScrollableY(true);
         center.getAllStyles().setPadding(10, 10, 10, 10);
 
         Label title = new Label("Join MemoryLens");
+        title.setName("registerTitle");
         title.setUIID("Title");
         title.getAllStyles().setAlignment(Component.CENTER);
 
-        TextField nameField = new TextField("", "Full Name", 20, TextField.ANY);
-        nameField.setUIID("TextField");
+        TextField nameField = new TextField("", "Full Name", 20, TextArea.ANY);
+        nameField.setName("registerName");
+        nameField.setUIID(UIID_TEXT_FIELD);
 
-        TextField emailField = new TextField("", "Email", 20, TextField.EMAILADDR);
-        emailField.setUIID("TextField");
+        TextField emailField = new TextField("", "Email", 20, TextArea.EMAILADDR);
+        emailField.setName("registerEmail");
+        emailField.setUIID(UIID_TEXT_FIELD);
 
-        TextField passwordField = new TextField("", "Password", 20, TextField.PASSWORD);
-        passwordField.setUIID("TextField");
+        TextField passwordField = new TextField("", "Password", 20, TextArea.PASSWORD);
+        passwordField.setName("registerPassword");
+        passwordField.setUIID(UIID_TEXT_FIELD);
 
         String[] roles = { "Caregiver (Admin)", "Patient", "Family Member" };
         ComboBox<String> rolePicker = new ComboBox<>((Object[]) roles);
-        rolePicker.setUIID("TextField");
+        rolePicker.setName("registerRole");
+        rolePicker.setUIID(UIID_TEXT_FIELD);
 
-        TextField contextField = new TextField("", "Context (e.g. Who are you?)", 20, TextField.ANY);
-        contextField.setUIID("TextField");
+        TextField contextField = new TextField("", "Context (e.g. Who are you?)", 20, TextArea.ANY);
+        contextField.setName("registerContext");
+        contextField.setUIID(UIID_TEXT_FIELD);
+
+        TextField chatId = new TextField("", "Telegram Chat ID (Optional)", 20, TextArea.ANY);
+        chatId.setName("registerChatId");
+        chatId.setUIID(UIID_TEXT_FIELD);
+
+        Button helpButton = new Button("?");
+        helpButton.setName("registerChatHelpBtn");
+        helpButton.setUIID("ButtonSecondary");
+        helpButton.addActionListener(e ->
+                Dialog.show("Telegram ID help",
+                        "Search for '@userinfobot' on Telegram.\n" +
+                                "Click 'Start'.\n" +
+                                "Copy the ID number it gives you and paste it here.",
+                        "OK", null)
+        );
 
         Button registerButton = new Button("Register");
+        registerButton.setName("registerBtn");
         registerButton.setMaterialIcon(FontImage.MATERIAL_PERSON_ADD, 5);
 
         registerButton.addActionListener(e -> {
@@ -42,41 +83,30 @@ public class RegistrationForm extends Form {
             String email = emailField.getText();
             String password = passwordField.getText();
             String context = contextField.getText();
-            int roleIdx = rolePicker.getSelectedIndex();
-            short role = (short) roleIdx;
+            String cId = chatId.getText();
 
-            if (name.isEmpty() || email.isEmpty() || password.isEmpty()) {
-                Dialog.show("Error", "Name, Email and Password are required", "OK", null);
-                return;
-            }
+            short role = (short) rolePicker.getSelectedIndex();
 
-            Map<String, Object> regData = new HashMap<>();
-            regData.put("name", name);
-            regData.put("email", email);
-            regData.put("password", password);
-            regData.put("context", context);
-            regData.put("role", role);
+            registerButton.setEnabled(false);
 
-            GenericNetworkService.getInstance().post("/api/auth/register", regData,
-                    new GenericNetworkService.NetworkCallback() {
-                        @Override
-                        public void onSuccess(Map<String, Object> response) {
-                            Display.getInstance().callSerially(() -> {
-                                Dialog.show("Success", "Account created! Please login to join a group.", "OK", null);
-                                MemoryLens.showLoginScreen();
-                            });
-                        }
+            RegisterRequest req = new RegisterRequest(name, email, password, context, role, cId);
+            authUseCase.register(req, result -> {
+                Display.getInstance().callSerially(() -> {
+                    registerButton.setEnabled(true);
 
-                        @Override
-                        public void onFailure(String errorMessage) {
-                            Display.getInstance().callSerially(() -> {
-                                Dialog.show("Error", "Registration failed: " + errorMessage, "OK", null);
-                            });
-                        }
-                    });
+                    if (!result.isOk()) {
+                        Dialog.show("Error", "Registration failed: " + result.getError(), "OK", null);
+                        return;
+                    }
+
+                    Dialog.show("Success", "Account created! Please login to join a group.", "OK", null);
+                    MemoryLens.showLoginScreen();
+                });
+            });
         });
 
         Button backButton = new Button("Back to Login");
+        backButton.setName("backToLoginBtn");
         backButton.setUIID("ButtonSecondary");
         backButton.addActionListener(e -> MemoryLens.showLoginScreen());
 
@@ -91,9 +121,14 @@ public class RegistrationForm extends Form {
         center.add(rolePicker);
         center.add(new Label("Context (optional):"));
         center.add(contextField);
+
+        Container chatIdCnt = BorderLayout.center(chatId).add(BorderLayout.EAST, helpButton);
+        center.add(new Label("Telegram Chat ID (optional):"));
+        center.add(chatIdCnt);
+
         center.add(registerButton);
         center.add(backButton);
 
-        this.add(BorderLayout.CENTER, center);
+        add(BorderLayout.CENTER, center);
     }
 }

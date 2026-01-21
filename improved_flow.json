@@ -1,0 +1,245 @@
+[
+    {
+        "id": "improved_recognize_flow",
+        "type": "tab",
+        "label": "Improved Recognize Flow",
+        "disabled": false,
+        "info": "Flujo optimizado para reconocimiento facial con TTS Piper y cabeceras personalizadas."
+    },
+    {
+        "id": "http_in_recognize",
+        "type": "http in",
+        "z": "improved_recognize_flow",
+        "name": "POST /api/recognize",
+        "url": "/api/recognize",
+        "method": "post",
+        "upload": true,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 140,
+        "y": 100,
+        "wires": [
+            [
+                "prep_multipart"
+            ]
+        ]
+    },
+    {
+        "id": "prep_multipart",
+        "type": "function",
+        "z": "improved_recognize_flow",
+        "name": "Prepare Multipart",
+        "func": "if (msg.req.files && msg.req.files.length > 0) {\n    var file = msg.req.files[0];\n    \n    msg.group_id = (msg.req.body && msg.req.body.groupId) ? msg.req.body.groupId : \"default\";\n    msg.session_id = msg.req.headers['x-session-id'];\n    \n    msg.original_image_data = {\n        buffer: file.buffer,\n        filename: file.originalname,\n        mimetype: file.mimetype\n    };\n    \n    msg.payload = {\n        \"image\": {\n            \"value\": file.buffer,\n            \"options\": {\n                \"filename\": file.originalname,\n                \"contentType\": file.mimetype\n            }\n        }\n    };\n    msg.headers = {};\n    msg.headers['content-type'] = 'multipart/form-data';\n} else {\n    msg.payload = {};\n}\nreturn msg;",
+        "outputs": 1,
+        "x": 350,
+        "y": 100,
+        "wires": [
+            [
+                "flask_detect"
+            ]
+        ]
+    },
+    {
+        "id": "flask_detect",
+        "type": "http request",
+        "z": "improved_recognize_flow",
+        "name": "Request Flask (Detect)",
+        "method": "POST",
+        "ret": "obj",
+        "url": "http://localhost:5000/detect",
+        "x": 570,
+        "y": 100,
+        "wires": [
+            [
+                "validate_score"
+            ]
+        ]
+    },
+    {
+        "id": "validate_score",
+        "type": "function",
+        "z": "improved_recognize_flow",
+        "name": "ValidateScore",
+        "func": "const TH = flow.get('face_threshold') ?? 0.5;\nconst p = msg.payload || {};\nconst score = Number(p.score);\n\nif (Number.isNaN(score) || score < TH) {\n    msg.payload = { recognized: false, reason: 'low_score', score: score || 0 };\n    msg.statusCode = 200;\n    return [null, msg];\n}\n\nreturn [msg, null];",
+        "outputs": 2,
+        "x": 790,
+        "y": 100,
+        "wires": [
+            [
+                "prep_uniface"
+            ],
+            [
+                "final_resp"
+            ]
+        ]
+    },
+    {
+        "id": "prep_uniface",
+        "type": "function",
+        "z": "improved_recognize_flow",
+        "name": "Prepare Uniface Request",
+        "func": "if (msg.original_image_data) {\n    msg.payload = {\n        \"image\": {\n            \"value\": msg.original_image_data.buffer,\n            \"options\": {\n                \"filename\": msg.original_image_data.filename,\n                \"contentType\": msg.original_image_data.mimetype\n            }\n        }\n    };\n    msg.headers = { 'content-type': 'multipart/form-data' };\n} \nreturn msg;",
+        "outputs": 1,
+        "x": 1020,
+        "y": 80,
+        "wires": [
+            [
+                "flask_recognize"
+            ]
+        ]
+    },
+    {
+        "id": "flask_recognize",
+        "type": "http request",
+        "z": "improved_recognize_flow",
+        "name": "POST /recognize (Uniface)",
+        "method": "POST",
+        "ret": "obj",
+        "url": "http://localhost:5000/recognize",
+        "x": 1250,
+        "y": 80,
+        "wires": [
+            [
+                "format_embedding"
+            ]
+        ]
+    },
+    {
+        "id": "format_embedding",
+        "type": "function",
+        "z": "improved_recognize_flow",
+        "name": "Format Embedding Request",
+        "func": "const resp = msg.payload || {};\nlet embeddingBase64 = null;\n\nif (resp.embedding && Array.isArray(resp.embedding)) {\n    const floatArray = new Float32Array(resp.embedding);\n    const buffer = Buffer.from(floatArray.buffer);\n    embeddingBase64 = buffer.toString('base64');\n}\n\nif (embeddingBase64) {\n    msg.payload = {\n        embeddingBase64: embeddingBase64,\n        minSim: 0.4,\n        top: 5\n    };\n    msg.headers = { 'Content-Type': 'application/json' };\n    if (msg.session_id) msg.headers['X-Session-Id'] = msg.session_id;\n    msg.url = `http://localhost:8080/garAItu/group/${msg.group_id}/recognize`;\n    return [msg, null];\n} else {\n    msg.payload = { recognized: false, reason: \"no_face_detected\" };\n    msg.statusCode = 200;\n    return [null, msg];\n}",
+        "outputs": 2,
+        "x": 1510,
+        "y": 80,
+        "wires": [
+            [
+                "java_rest"
+            ],
+            [
+                "final_resp"
+            ]
+        ]
+    },
+    {
+        "id": "java_rest",
+        "type": "http request",
+        "z": "improved_recognize_flow",
+        "name": "POST (Java REST)",
+        "method": "POST",
+        "ret": "obj",
+        "x": 1740,
+        "y": 60,
+        "wires": [
+            [
+                "pick_name_tts"
+            ]
+        ]
+    },
+    {
+        "id": "pick_name_tts",
+        "type": "function",
+        "z": "improved_recognize_flow",
+        "name": "Pick Name & Compose TTS",
+        "func": "const p = msg.payload || {};\n\nfunction pickName(obj) {\n  if (!obj) return null;\n  if (typeof obj.name === 'string') return obj.name;\n  if (obj.bestMatch && typeof obj.bestMatch.name === 'string') return obj.bestMatch.name;\n  if (Array.isArray(obj.matches) && obj.matches.length > 0) return obj.matches[0].name;\n  if (obj.data) return pickName(obj.data);\n  return null;\n}\n\nconst name = pickName(p);\nconst recognized = (p.recognized === true) || (p.found === true) || !!name;\n\nif (!recognized) {\n  msg.statusCode = 200;\n  msg.payload = { recognized: false, reason: \"not_found_in_db\" };\n  return [null, msg];\n}\n\nmsg.recognizedName = name || \"Desconocido\";\nconst context = msg.group_id || \"General\";\nmsg.ttsText = name \n    ? `Sistema de reconocimiento: Se ha identificado a ${name} en el contexto ${context}.` \n    : `Sistema de reconocimiento: Persona identificada en el contexto ${context}, pero el nombre no está registrado.`;\nreturn [msg, null];",
+        "outputs": 2,
+        "x": 1960,
+        "y": 60,
+        "wires": [
+            [
+                "build_piper"
+            ],
+            [
+                "final_resp"
+            ]
+        ]
+    },
+    {
+        "id": "build_piper",
+        "type": "function",
+        "z": "improved_recognize_flow",
+        "name": "Build Piper Request",
+        "func": "msg.method = \"POST\";\nmsg.url = \"http://localhost:8000/tts\";\nmsg.headers = { \"Content-Type\": \"application/json\" };\nmsg.payload = { text: msg.ttsText };\nreturn msg;",
+        "outputs": 1,
+        "x": 2180,
+        "y": 40,
+        "wires": [
+            [
+                "call_piper"
+            ]
+        ]
+    },
+    {
+        "id": "call_piper",
+        "type": "http request",
+        "z": "improved_recognize_flow",
+        "name": "Call Piper (WAV)",
+        "method": "use",
+        "ret": "bin",
+        "url": "",
+        "x": 2390,
+        "y": 40,
+        "wires": [
+            [
+                "set_headers"
+            ]
+        ]
+    },
+    {
+        "id": "set_headers",
+        "type": "function",
+        "z": "improved_recognize_flow",
+        "name": "Set Headers",
+        "func": "msg.statusCode = 200;\nmsg.headers = {\n  \"Content-Type\": \"audio/wav\",\n  \"X-Recognized-Person\": encodeURIComponent(msg.recognizedName || \"Unknown\"),\n  \"Content-Disposition\": \"inline; filename=\\\"speech.wav\\\"\",\n  \"Cache-Control\": \"no-store\"\n};\nreturn msg;",
+        "outputs": 1,
+        "x": 2580,
+        "y": 40,
+        "wires": [
+            [
+                "final_resp"
+            ]
+        ]
+    },
+    {
+        "id": "final_resp",
+        "type": "http response",
+        "z": "improved_recognize_flow",
+        "name": "Final Response (JSON/WAV)",
+        "statusCode": "",
+        "headers": {},
+        "x": 2800,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "catch_all",
+        "type": "catch",
+        "z": "improved_recognize_flow",
+        "name": "Catch All",
+        "scope": null,
+        "uncaught": false,
+        "x": 350,
+        "y": 200,
+        "wires": [
+            [
+                "format_err"
+            ]
+        ]
+    },
+    {
+        "id": "format_err",
+        "type": "function",
+        "z": "improved_recognize_flow",
+        "name": "Format Error",
+        "func": "msg.payload = { error: msg.error ? msg.error.message : 'Unknown error' };\nmsg.statusCode = 500;\nreturn msg;",
+        "outputs": 1,
+        "x": 550,
+        "y": 200,
+        "wires": [
+            [
+                "final_resp"
+            ]
+        ]
+    }
+]

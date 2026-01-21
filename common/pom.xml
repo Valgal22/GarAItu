@@ -15,6 +15,16 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
+    <properties>
+        <!-- Ensure JUnit 5 tests run and Sonar sees coverage -->
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+
+        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+        <!-- Exclude UI from coverage (keep core covered) -->
+        <sonar.coverage.exclusions>**/me/sebz/mu/pbl5/*.java,**/*Dashboard*.java,**/*Form*.java</sonar.coverage.exclusions>
+    </properties>
+
     <!-- Add your cn1lib dependencies to this section -->
     <dependencies>
         <dependency>
@@ -23,7 +33,7 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- INJECT DEPENDENCIES -->
+        <!-- TEST DEPENDENCIES -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
@@ -291,8 +301,8 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
                 </configuration>
             </plugin>
 
@@ -343,11 +353,38 @@
                 </executions>
             </plugin>
 
+            <!-- Run JUnit 5 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <configuration/>
+                <version>3.2.5</version>
+                <configuration>
+                    <useModulePath>false</useModulePath>
+                </configuration>
             </plugin>
+
+            <!-- Generate JaCoCo XML for Sonar -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.11</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
     </build>
 </project>

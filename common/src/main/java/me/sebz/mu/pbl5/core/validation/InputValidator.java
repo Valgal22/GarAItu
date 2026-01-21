@@ -12,6 +12,7 @@ public final class InputValidator {
         List<String> errors = new ArrayList<>();
         requireNonBlank(errors, email, "Email is required");
         requireNonBlank(errors, password, "Password is required");
+
         if (email != null && !email.trim().isEmpty() && !isValidEmail(email)) {
             errors.add("Please enter a valid email address");
         }
@@ -23,12 +24,15 @@ public final class InputValidator {
         requireNonBlank(errors, name, "Name is required");
         requireNonBlank(errors, email, "Email is required");
         requireNonBlank(errors, password, "Password is required");
+
         if (email != null && !email.trim().isEmpty() && !isValidEmail(email)) {
             errors.add("Please enter a valid email address");
         }
-        if (password != null && password.length() > 0 && password.length() < 6) {
+
+        if (password != null && !password.isEmpty() && password.length() < 6) {
             errors.add("Password must be at least 6 characters");
         }
+
         return ValidationResult.ofErrors(errors);
     }
 

@@ -16,16 +16,14 @@
     <packaging>jar</packaging>
 
     <properties>
-        <!-- Ensure JUnit 5 tests run and Sonar sees coverage -->
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
 
+        <!-- Sonar -->
         <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
-        <!-- Exclude UI from coverage (keep core covered) -->
         <sonar.coverage.exclusions>**/me/sebz/mu/pbl5/*.java,**/*Dashboard*.java,**/*Form*.java</sonar.coverage.exclusions>
     </properties>
 
-    <!-- Add your cn1lib dependencies to this section -->
     <dependencies>
         <dependency>
             <groupId>com.codenameone</groupId>
@@ -60,11 +58,7 @@
         </dependency>
     </dependencies>
 
-    <!-- The following are profiles to cover special cases -->
     <profiles>
-
-        <!-- A profile to install Codename One support libraries to your home directory
-            if they aren't installed yet. -->
         <profile>
             <id>install-codenameone</id>
             <activation>
@@ -104,12 +98,10 @@
             </build>
         </profile>
 
-        <!-- A profile to add kotlin support.  Activated if the src/main/kotlin directory exists -->
         <profile>
             <id>kotlin</id>
             <activation>
                 <file>
-                    <!-- To enable Kotlin, add the following file to the project base dir -->
                     <exists>${basedir}/src/main/kotlin</exists>
                 </file>
             </activation>
@@ -293,6 +285,27 @@
                 <codename1.targetPlatform>javase</codename1.targetPlatform>
             </properties>
         </profile>
+
+        <!-- PERFIL PARA CI: desactiva CSS -->
+        <profile>
+            <id>ci</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.codenameone</groupId>
+                        <artifactId>codenameone-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>cn1-process-classes</id>
+                                <!-- "none" evita que se ejecute en CI -->
+                                <phase>none</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
     </profiles>
 
     <build>
@@ -353,7 +366,6 @@
                 </executions>
             </plugin>
 
-            <!-- Run JUnit 5 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -363,11 +375,11 @@
                 </configuration>
             </plugin>
 
-            <!-- Generate JaCoCo XML for Sonar -->
+            <!-- JaCoCo: generar XML + HTML -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.11</version>
+                <version>0.8.12</version>
                 <executions>
                     <execution>
                         <id>prepare-agent</id>
@@ -375,12 +387,20 @@
                             <goal>prepare-agent</goal>
                         </goals>
                     </execution>
+
+                    <!-- Report en verify para que exista siempre en CI -->
                     <execution>
                         <id>report</id>
                         <phase>verify</phase>
                         <goals>
                             <goal>report</goal>
                         </goals>
+                        <configuration>
+                            <formats>
+                                <format>XML</format>
+                                <format>HTML</format>
+                            </formats>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

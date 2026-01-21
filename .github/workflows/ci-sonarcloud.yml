@@ -16,6 +16,7 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Build + tests con Java 8 (tu proyecto compila en 1.8)
       - name: Set up Java 8 (build/tests)
         uses: actions/setup-java@v4
         with:
@@ -23,13 +24,17 @@ jobs:
           java-version: 8
           cache: maven
 
+      # Importante: usar perfil -Pci para saltar el CSS de CodenameOne en CI
       - name: Run tests (common) + JaCoCo report
-        run: mvn -B -pl common -am clean verify jacoco:report
+        run: mvn -B -pl common -am -Pci clean verify jacoco:report
 
-      - name: Check JaCoCo XML
-        run: ls -la common/target/site/jacoco || true
+      - name: Debug JaCoCo XML
+        run: |
+          ls -la common/target/site/jacoco || true
+          test -f common/target/site/jacoco/jacoco.xml && echo "jacoco.xml OK" || echo "jacoco.xml NOT FOUND"
 
-      - name: Set up Java 17 (Sonar)
+      # Scanner SonarCloud suele ir mejor con Java 17
+      - name: Set up Java 17 (Sonar scanner)
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -40,7 +45,7 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: >
-          mvn -B -pl common sonar:sonar
+          mvn -B -pl common -Pci sonar:sonar
           -Dsonar.projectKey=Valgal22_Rest-GarAItu
           -Dsonar.organization=garaitu
           -Dsonar.host.url=https://sonarcloud.io

@@ -22,29 +22,37 @@ public class GroupOnboardingForm extends Form {
 
     public GroupOnboardingForm() {
         super("Welcome", new BorderLayout());
+        setName("groupOnboardingForm");
 
         Container center = new Container(BoxLayout.y());
+        center.setName("groupOnboardingCenter");
         center.setScrollableY(true);
         center.getAllStyles().setPadding(10, 10, 10, 10);
 
         Label title = new Label("Joining a Family Group");
+        title.setName("groupOnboardingTitle");
         title.setUIID("Title");
 
         Label info = new Label("To proceed, you need to join a family group.");
+        info.setName("groupOnboardingInfo");
         info.setUIID("Label");
 
         TextField inviteCodeField = new TextField("", "Invite Code", 20, TextArea.ANY);
+        inviteCodeField.setName("inviteCode");
         inviteCodeField.setUIID("TextField");
 
         Button joinButton = new Button("Join with Code");
+        joinButton.setName("joinGroupBtn");
         joinButton.setMaterialIcon(FontImage.MATERIAL_GROUP_ADD, 5);
 
         joinButton.addActionListener(e -> {
             String code = inviteCodeField.getText();
-            if (code.isEmpty()) {
+            if (code == null || code.trim().isEmpty()) {
                 Dialog.show(TITLE_ERROR, "Please enter an invite code", "OK", null);
                 return;
             }
+
+            joinButton.setEnabled(false);
 
             Map<String, Object> data = new HashMap<>();
             data.put("inviteCode", code);
@@ -58,6 +66,7 @@ public class GroupOnboardingForm extends Form {
                             MemoryLens.setFamilyGroupId(fgId);
 
                             Display.getInstance().callSerially(() -> {
+                                joinButton.setEnabled(true);
                                 Dialog.show("Success", "You have joined the group!", "OK", null);
                                 navigateToDashboard();
                             });
@@ -65,9 +74,10 @@ public class GroupOnboardingForm extends Form {
 
                         @Override
                         public void onFailure(String errorMessage) {
-                            Display.getInstance().callSerially(() ->
-                                    Dialog.show(TITLE_ERROR, "Could not join: " + errorMessage, "OK", null)
-                            );
+                            Display.getInstance().callSerially(() -> {
+                                joinButton.setEnabled(true);
+                                Dialog.show(TITLE_ERROR, "Could not join: " + errorMessage, "OK", null);
+                            });
                         }
                     });
         });
@@ -83,6 +93,7 @@ public class GroupOnboardingForm extends Form {
 
         if (isAdmin) {
             Button createButton = new Button("Create New Family Group");
+            createButton.setName("createGroupBtn");
             createButton.setUIID("ButtonSecondary");
             createButton.setMaterialIcon(FontImage.MATERIAL_ADD_CIRCLE, 5);
             createButton.addActionListener(e -> showCreateGroupDialog());
@@ -96,6 +107,8 @@ public class GroupOnboardingForm extends Form {
 
     private void showCreateGroupDialog() {
         TextField groupNameField = new TextField("", "Group Name (e.g. Smith Family)", 20, TextArea.ANY);
+        groupNameField.setName("createGroupName");
+
         Command ok = new Command("Create");
         Command cancel = new Command("Cancel");
 
@@ -104,7 +117,7 @@ public class GroupOnboardingForm extends Form {
         }
 
         String name = groupNameField.getText();
-        if (name.isEmpty()) {
+        if (name == null || name.trim().isEmpty()) {
             return;
         }
 

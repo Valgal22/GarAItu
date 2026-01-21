@@ -16,7 +16,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Build + tests con Java 8 (tu proyecto compila en 1.8)
       - name: Set up Java 8 (build/tests)
         uses: actions/setup-java@v4
         with:
@@ -24,33 +23,26 @@ jobs:
           java-version: 8
           cache: maven
 
-      # Importante: usar perfil -Pci para saltar el CSS de CodenameOne en CI
-      - name: Run tests (common) + JaCoCo report
-        run: mvn -B -pl common -am -Pci clean verify jacoco:report
+      - name: Run tests (common) + JaCoCo report (skip CN1 css in CI)
+        run: mvn -B -pl common -am -Pci clean verify
 
       - name: Debug JaCoCo XML
         run: |
+          echo "Listing common/target/site/jacoco"
           ls -la common/target/site/jacoco || true
-          test -f common/target/site/jacoco/jacoco.xml && echo "jacoco.xml OK" || echo "jacoco.xml NOT FOUND"
+          echo "Checking jacoco.xml"
+          test -f common/target/site/jacoco/jacoco.xml && echo "jacoco.xml OK" || (echo "jacoco.xml NOT FOUND" && exit 1)
 
-      # Scanner SonarCloud suele ir mejor con Java 17
-      - name: Set up Java 17 (Sonar scanner)
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-          cache: maven
-
-      - name: SonarCloud Analyze (common)
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: >
-          mvn -B -pl common -Pci sonar:sonar
-          -Dsonar.projectKey=Valgal22_Rest-GarAItu
-          -Dsonar.organization=garaitu
-          -Dsonar.host.url=https://sonarcloud.io
-          -Dsonar.login=${SONAR_TOKEN}
-          -Dsonar.coverage.jacoco.xmlReportPaths=common/target/site/jacoco/jacoco.xml
-          -Dsonar.sources=common/src/main/java
-          -Dsonar.tests=common/src/test/java
-          -Dsonar.java.binaries=common/target/classes
+        with:
+          args: >
+            -Dsonar.projectKey=Valgal22_GarAItu
+            -Dsonar.organization=garaitu
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.sources=common/src/main/java
+            -Dsonar.tests=common/src/test/java
+            -Dsonar.java.binaries=common/target/classes
+            -Dsonar.coverage.jacoco.xmlReportPaths=common/target/site/jacoco/jacoco.xml

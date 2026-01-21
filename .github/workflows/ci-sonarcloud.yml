@@ -1,0 +1,51 @@
+name: CI - Maven Tests & SonarCloud
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-analyze:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java 8 (build/tests)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 8
+          cache: maven
+
+      - name: Run tests (common) + JaCoCo report
+        run: mvn -B -pl common -am clean verify jacoco:report
+
+      - name: Check JaCoCo XML
+        run: ls -la common/target/site/jacoco || true
+
+      - name: Set up Java 17 (Sonar)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+
+      - name: SonarCloud Analyze (common)
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: >
+          mvn -B -pl common sonar:sonar
+          -Dsonar.projectKey=Valgal22_Rest-GarAItu
+          -Dsonar.organization=garaitu
+          -Dsonar.host.url=https://sonarcloud.io
+          -Dsonar.login=${SONAR_TOKEN}
+          -Dsonar.coverage.jacoco.xmlReportPaths=common/target/site/jacoco/jacoco.xml
+          -Dsonar.sources=common/src/main/java
+          -Dsonar.tests=common/src/test/java
+          -Dsonar.java.binaries=common/target/classes

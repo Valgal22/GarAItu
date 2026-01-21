@@ -210,8 +210,7 @@ public class FamilyDashboard extends Form {
                                 memberListContainer,
                                 list,
                                 FamilyDashboard.this::addMemberRow,
-                                EMPTY_MEMBERS_MSG
-                        );
+                                EMPTY_MEMBERS_MSG);
                     }
 
                     @Override
@@ -279,9 +278,8 @@ public class FamilyDashboard extends Form {
 
                         @Override
                         public void onFailure(String errorMessage) {
-                            Display.getInstance().callSerially(() ->
-                                    Dialog.show(TITLE_ERROR, "Update failed: " + errorMessage, "OK", null)
-                            );
+                            Display.getInstance().callSerially(
+                                    () -> Dialog.show(TITLE_ERROR, "Update failed: " + errorMessage, "OK", null));
                         }
                     });
         });
@@ -356,9 +354,14 @@ public class FamilyDashboard extends Form {
 
                     @Override
                     public void onFailure(String errorMessage) {
-                        Display.getInstance().callSerially(() ->
-                                Dialog.show(TITLE_ERROR, errorMessage, "OK", null)
-                        );
+                        Display.getInstance().callSerially(() -> {
+                            if (errorMessage != null && errorMessage.contains("No valid face detected")) {
+                                Dialog.show(TITLE_ERROR, "No face detected in the image. Please try again.", "OK",
+                                        null);
+                            } else {
+                                Dialog.show(TITLE_ERROR, errorMessage, "OK", null);
+                            }
+                        });
                     }
                 });
     }

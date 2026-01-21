@@ -369,9 +369,54 @@
       </build>
     </profile>
 
-    <!-- The remaining simulator/debug profiles are unchanged -->
-    <!-- You can keep them as-is in your project if needed -->
-    <!-- If you want, paste them back from your original POM below this line -->
+    <profile>
+      <id>simulator</id>
+      <properties>
+        <codename1.platform>javase</codename1.platform>
+        <exec.mainClass>com.codenameone.impl.javase.Simulator</exec.mainClass>
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>com.codenameone</groupId>
+          <artifactId>codenameone-core</artifactId>
+          <scope>compile</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.codenameone</groupId>
+          <artifactId>codenameone-javase</artifactId>
+          <scope>compile</scope>
+        </dependency>
+      </dependencies>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>run-simulator</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>java</executable>
+                  <classpathScope>test</classpathScope>
+                  <arguments>
+                    <argument>-Dcodename1.platform=javase</argument>
+                    <argument>-classpath</argument>
+                    <!-- automatically creates the classpath using dependencies -->
+                    <classpath/>
+                    <argument>com.codename1.impl.javase.Simulator</argument>
+                    <argument>me.sebz.mu.pbl5.MemoryLens</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 
 </project>

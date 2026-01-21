@@ -80,6 +80,7 @@ public class GenericNetworkService implements NetworkClient {
         MultipartRequest req = new MultipartRequest();
         req.setUrl(BASE_URL + endpoint);
         addToken(req);
+        req.setReadResponseForErrors(true);
 
         Map<String, Object> safeData = (data != null) ? data : Collections.emptyMap();
 
@@ -126,7 +127,8 @@ public class GenericNetworkService implements NetworkClient {
         return req;
     }
 
-    private void handleStandardResponse(ConnectionRequest req, NetworkClient.Callback callback, boolean allowEmptyBody) {
+    private void handleStandardResponse(ConnectionRequest req, NetworkClient.Callback callback,
+            boolean allowEmptyBody) {
         int code = req.getResponseCode();
         if (!isSuccess(code)) {
             handleErrorResponse(req, callback);

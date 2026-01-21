@@ -1,0 +1,32 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------< me.sebz.mu.pbl5:memorylens-javase >------------------
+[INFO] Building memorylens-javase 1.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- dependency:3.7.0:list (default-cli) @ memorylens-javase ---
+[INFO] Can't extract module name from jmf-2.1.1e.jar: hm20action.class found in top-level directory (unnamed package not allowed in module)
+[INFO] 
+[INFO] The following files have been resolved:
+[INFO]    me.sebz.mu.pbl5:memorylens-common:jar:1.0-SNAPSHOT:compile -- module memorylens.common (auto)
+[INFO]    me.sebz.mu.pbl5:memorylens-common:jar:tests:1.0-SNAPSHOT:test -- module memorylens.common (auto)
+[INFO]    com.codenameone:codenameone-core:jar:7.0.220:compile -- module codenameone.core (auto)
+[INFO]    com.codenameone:codenameone-javase:jar:7.0.220:compile -- module codenameone.javase (auto)
+[INFO]    com.codenameone:sqlite-jdbc:jar:7.0.220:compile -- module sqlite.jdbc (auto)
+[INFO]    com.jhlabs:filters:jar:2.0.235-1:compile -- module filters (auto)
+[INFO]    org.junit.jupiter:junit-jupiter-api:jar:5.8.2:test -- module org.junit.jupiter.api
+[INFO]    org.opentest4j:opentest4j:jar:1.2.0:test -- module org.opentest4j
+[INFO]    org.junit.platform:junit-platform-commons:jar:1.8.2:test -- module org.junit.platform.commons
+[INFO]    org.apiguardian:apiguardian-api:jar:1.1.2:test -- module org.apiguardian.api
+[INFO]    org.junit.jupiter:junit-jupiter-engine:jar:5.8.2:test -- module org.junit.jupiter.engine
+[INFO]    org.junit.platform:junit-platform-engine:jar:1.8.2:test -- module org.junit.platform.engine
+[INFO]    org.junit.jupiter:junit-jupiter-params:jar:5.8.2:test -- module org.junit.jupiter.params
+[INFO]    javax.media:jmf:jar:2.1.1e:compile
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  3.394 s
+[INFO] Finished at: 2026-01-21T14:14:17+01:00
+[INFO] ------------------------------------------------------------------------

@@ -1,0 +1,218 @@
+[INFO] Error stacktraces are turned on.
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] memorylens                                                         [pom]
+[INFO] memorylens-common                                                  [jar]
+[INFO] memorylens-javase                                                  [jar]
+[INFO] 
+[INFO] ---------------------< me.sebz.mu.pbl5:memorylens >---------------------
+[INFO] Building memorylens 1.0-SNAPSHOT                                   [1/3]
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] 
+[INFO] -----------------< me.sebz.mu.pbl5:memorylens-common >------------------
+[INFO] Building memorylens-common 1.0-SNAPSHOT                            [2/3]
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- properties-maven-plugin:1.0.0:read-project-properties (default) @ memorylens-common ---
+[INFO] 
+[INFO] --- jacoco-maven-plugin:0.8.11:prepare-agent (prepare-agent) @ memorylens-common ---
+[INFO] argLine set to -javaagent:C:\\Users\\ikerb\\.m2\\repository\\org\\jacoco\\org.jacoco.agent\\0.8.11\\org.jacoco.agent-0.8.11-runtime.jar=destfile=C:\\Users\\ikerb\\OneDrive\\Escritorio\\MU\\3-Maila\\PBL5\\Memorylens\\common\\target\\jacoco.exec
+[INFO] 
+[INFO] --- codenameone-maven-plugin:7.0.175:generate-gui-sources (generate-gui-sources) @ memorylens-common ---
+Generating GUI sources
+No GUI Entries available
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ memorylens-common ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory C:\Users\ikerb\OneDrive\Escritorio\MU\3-Maila\PBL5\Memorylens\common\src\main\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.8.0:compile (default-compile) @ memorylens-common ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- codenameone-maven-plugin:7.0.175:css (cn1-process-classes) @ memorylens-common ---
+[INFO] CSS sources unchanged since last compile.  Skipping CSS compilation
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:testResources (default-testResources) @ memorylens-common ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory C:\Users\ikerb\OneDrive\Escritorio\MU\3-Maila\PBL5\Memorylens\common\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.8.0:testCompile (default-testCompile) @ memorylens-common ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- maven-surefire-plugin:3.2.5:test (default-test) @ memorylens-common ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- codenameone-maven-plugin:7.0.175:attach-test-artifact (attach-test-artifact) @ memorylens-common ---
+[INFO] 
+[INFO] --- maven-jar-plugin:2.4:jar (default-jar) @ memorylens-common ---
+[INFO] 
+[INFO] --- jacoco-maven-plugin:0.8.11:report (report) @ memorylens-common ---
+[INFO] Loading execution data file C:\Users\ikerb\OneDrive\Escritorio\MU\3-Maila\PBL5\Memorylens\common\target\jacoco.exec
+[INFO] Analyzed bundle 'memorylens-common' with 33 classes
+[INFO] 
+[INFO] -----------------< me.sebz.mu.pbl5:memorylens-javase >------------------
+[INFO] Building memorylens-javase 1.0-SNAPSHOT                            [3/3]
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- codenameone-maven-plugin:7.0.175:generate-javase-sources (add-se-sources) @ memorylens-javase ---
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:resources (default-resources) @ memorylens-javase ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory C:\Users\ikerb\OneDrive\Escritorio\MU\3-Maila\PBL5\Memorylens\javase\src\main\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.8.0:compile (default-compile) @ memorylens-javase ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- maven-resources-plugin:2.6:testResources (default-testResources) @ memorylens-javase ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory C:\Users\ikerb\OneDrive\Escritorio\MU\3-Maila\PBL5\Memorylens\javase\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.8.0:testCompile (default-testCompile) @ memorylens-javase ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- maven-surefire-plugin:3.2.5:test (default-test) @ memorylens-javase ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- maven-jar-plugin:2.4:jar (default-jar) @ memorylens-javase ---
+[INFO] 
+[INFO] --- exec-maven-plugin:3.0.0:exec (run-simulator) @ memorylens-javase ---
+Error: Could not find or load main class com.codenameone.impl.javase.Simulator
+Caused by: java.lang.ClassNotFoundException: com.codenameone.impl.javase.Simulator
+[ERROR] Command execution failed.
+org.apache.commons.exec.ExecuteException: Process exited with an error: 1 (Exit value: 1)
+    at org.apache.commons.exec.DefaultExecutor.executeInternal (DefaultExecutor.java:404)
+    at org.apache.commons.exec.DefaultExecutor.execute (DefaultExecutor.java:166)
+    at org.codehaus.mojo.exec.ExecMojo.executeCommandLine (ExecMojo.java:982)
+    at org.codehaus.mojo.exec.ExecMojo.executeCommandLine (ExecMojo.java:929)
+    at org.codehaus.mojo.exec.ExecMojo.execute (ExecMojo.java:457)
+    at org.apache.maven.plugin.DefaultBuildPluginManager.executeMojo (DefaultBuildPluginManager.java:137)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:210)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:156)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:148)
+    at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject (LifecycleModuleBuilder.java:117)
+    at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject (LifecycleModuleBuilder.java:81)
+    at org.apache.maven.lifecycle.internal.builder.singlethreaded.SingleThreadedBuilder.build (SingleThreadedBuilder.java:56)
+    at org.apache.maven.lifecycle.internal.LifecycleStarter.execute (LifecycleStarter.java:128)
+    at org.apache.maven.DefaultMaven.doExecute (DefaultMaven.java:305)
+    at org.apache.maven.DefaultMaven.doExecute (DefaultMaven.java:192)
+    at org.apache.maven.DefaultMaven.execute (DefaultMaven.java:105)
+    at org.apache.maven.cli.MavenCli.execute (MavenCli.java:957)
+    at org.apache.maven.cli.MavenCli.doMain (MavenCli.java:289)
+    at org.apache.maven.cli.MavenCli.main (MavenCli.java:193)
+    at jdk.internal.reflect.DirectMethodHandleAccessor.invoke (DirectMethodHandleAccessor.java:103)
+    at java.lang.reflect.Method.invoke (Method.java:580)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.launchEnhanced (Launcher.java:282)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.launch (Launcher.java:225)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.mainWithExitCode (Launcher.java:406)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.main (Launcher.java:347)
+    at jdk.internal.reflect.DirectMethodHandleAccessor.invoke (DirectMethodHandleAccessor.java:103)
+    at java.lang.reflect.Method.invoke (Method.java:580)
+    at org.apache.maven.wrapper.BootstrapMainStarter.start (BootstrapMainStarter.java:39)
+    at org.apache.maven.wrapper.WrapperExecutor.execute (WrapperExecutor.java:122)
+    at org.apache.maven.wrapper.MavenWrapperMain.main (MavenWrapperMain.java:61)
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for memorylens 1.0-SNAPSHOT:
+[INFO] 
+[INFO] memorylens ......................................... SUCCESS [  0.006 s]
+[INFO] memorylens-common .................................. SUCCESS [  6.276 s]
+[INFO] memorylens-javase .................................. FAILURE [  0.874 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  7.359 s
+[INFO] Finished at: 2026-01-21T14:15:59+01:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.codehaus.mojo:exec-maven-plugin:3.0.0:exec (run-simulator) on project memorylens-javase: Command execution failed.: Process exited with an error: 1 (Exit value: 1) -> [Help 1]
+org.apache.maven.lifecycle.LifecycleExecutionException: Failed to execute goal org.codehaus.mojo:exec-maven-plugin:3.0.0:exec (run-simulator) on project memorylens-javase: Command execution failed.
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:215)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:156)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:148)
+    at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject (LifecycleModuleBuilder.java:117)
+    at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject (LifecycleModuleBuilder.java:81)
+    at org.apache.maven.lifecycle.internal.builder.singlethreaded.SingleThreadedBuilder.build (SingleThreadedBuilder.java:56)
+    at org.apache.maven.lifecycle.internal.LifecycleStarter.execute (LifecycleStarter.java:128)
+    at org.apache.maven.DefaultMaven.doExecute (DefaultMaven.java:305)
+    at org.apache.maven.DefaultMaven.doExecute (DefaultMaven.java:192)
+    at org.apache.maven.DefaultMaven.execute (DefaultMaven.java:105)
+    at org.apache.maven.cli.MavenCli.execute (MavenCli.java:957)
+    at org.apache.maven.cli.MavenCli.doMain (MavenCli.java:289)
+    at org.apache.maven.cli.MavenCli.main (MavenCli.java:193)
+    at jdk.internal.reflect.DirectMethodHandleAccessor.invoke (DirectMethodHandleAccessor.java:103)
+    at java.lang.reflect.Method.invoke (Method.java:580)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.launchEnhanced (Launcher.java:282)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.launch (Launcher.java:225)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.mainWithExitCode (Launcher.java:406)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.main (Launcher.java:347)
+    at jdk.internal.reflect.DirectMethodHandleAccessor.invoke (DirectMethodHandleAccessor.java:103)
+    at java.lang.reflect.Method.invoke (Method.java:580)
+    at org.apache.maven.wrapper.BootstrapMainStarter.start (BootstrapMainStarter.java:39)
+    at org.apache.maven.wrapper.WrapperExecutor.execute (WrapperExecutor.java:122)
+    at org.apache.maven.wrapper.MavenWrapperMain.main (MavenWrapperMain.java:61)
+Caused by: org.apache.maven.plugin.MojoExecutionException: Command execution failed.
+    at org.codehaus.mojo.exec.ExecMojo.execute (ExecMojo.java:478)
+    at org.apache.maven.plugin.DefaultBuildPluginManager.executeMojo (DefaultBuildPluginManager.java:137)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:210)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:156)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:148)
+    at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject (LifecycleModuleBuilder.java:117)
+    at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject (LifecycleModuleBuilder.java:81)
+    at org.apache.maven.lifecycle.internal.builder.singlethreaded.SingleThreadedBuilder.build (SingleThreadedBuilder.java:56)
+    at org.apache.maven.lifecycle.internal.LifecycleStarter.execute (LifecycleStarter.java:128)
+    at org.apache.maven.DefaultMaven.doExecute (DefaultMaven.java:305)
+    at org.apache.maven.DefaultMaven.doExecute (DefaultMaven.java:192)
+    at org.apache.maven.DefaultMaven.execute (DefaultMaven.java:105)
+    at org.apache.maven.cli.MavenCli.execute (MavenCli.java:957)
+    at org.apache.maven.cli.MavenCli.doMain (MavenCli.java:289)
+    at org.apache.maven.cli.MavenCli.main (MavenCli.java:193)
+    at jdk.internal.reflect.DirectMethodHandleAccessor.invoke (DirectMethodHandleAccessor.java:103)
+    at java.lang.reflect.Method.invoke (Method.java:580)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.launchEnhanced (Launcher.java:282)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.launch (Launcher.java:225)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.mainWithExitCode (Launcher.java:406)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.main (Launcher.java:347)
+    at jdk.internal.reflect.DirectMethodHandleAccessor.invoke (DirectMethodHandleAccessor.java:103)
+    at java.lang.reflect.Method.invoke (Method.java:580)
+    at org.apache.maven.wrapper.BootstrapMainStarter.start (BootstrapMainStarter.java:39)
+    at org.apache.maven.wrapper.WrapperExecutor.execute (WrapperExecutor.java:122)
+    at org.apache.maven.wrapper.MavenWrapperMain.main (MavenWrapperMain.java:61)
+Caused by: org.apache.commons.exec.ExecuteException: Process exited with an error: 1 (Exit value: 1)
+    at org.apache.commons.exec.DefaultExecutor.executeInternal (DefaultExecutor.java:404)
+    at org.apache.commons.exec.DefaultExecutor.execute (DefaultExecutor.java:166)
+    at org.codehaus.mojo.exec.ExecMojo.executeCommandLine (ExecMojo.java:982)
+    at org.codehaus.mojo.exec.ExecMojo.executeCommandLine (ExecMojo.java:929)
+    at org.codehaus.mojo.exec.ExecMojo.execute (ExecMojo.java:457)
+    at org.apache.maven.plugin.DefaultBuildPluginManager.executeMojo (DefaultBuildPluginManager.java:137)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:210)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:156)
+    at org.apache.maven.lifecycle.internal.MojoExecutor.execute (MojoExecutor.java:148)
+    at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject (LifecycleModuleBuilder.java:117)
+    at org.apache.maven.lifecycle.internal.LifecycleModuleBuilder.buildProject (LifecycleModuleBuilder.java:81)
+    at org.apache.maven.lifecycle.internal.builder.singlethreaded.SingleThreadedBuilder.build (SingleThreadedBuilder.java:56)
+    at org.apache.maven.lifecycle.internal.LifecycleStarter.execute (LifecycleStarter.java:128)
+    at org.apache.maven.DefaultMaven.doExecute (DefaultMaven.java:305)
+    at org.apache.maven.DefaultMaven.doExecute (DefaultMaven.java:192)
+    at org.apache.maven.DefaultMaven.execute (DefaultMaven.java:105)
+    at org.apache.maven.cli.MavenCli.execute (MavenCli.java:957)
+    at org.apache.maven.cli.MavenCli.doMain (MavenCli.java:289)
+    at org.apache.maven.cli.MavenCli.main (MavenCli.java:193)
+    at jdk.internal.reflect.DirectMethodHandleAccessor.invoke (DirectMethodHandleAccessor.java:103)
+    at java.lang.reflect.Method.invoke (Method.java:580)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.launchEnhanced (Launcher.java:282)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.launch (Launcher.java:225)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.mainWithExitCode (Launcher.java:406)
+    at org.codehaus.plexus.classworlds.launcher.Launcher.main (Launcher.java:347)
+    at jdk.internal.reflect.DirectMethodHandleAccessor.invoke (DirectMethodHandleAccessor.java:103)
+    at java.lang.reflect.Method.invoke (Method.java:580)
+    at org.apache.maven.wrapper.BootstrapMainStarter.start (BootstrapMainStarter.java:39)
+    at org.apache.maven.wrapper.WrapperExecutor.execute (WrapperExecutor.java:122)
+    at org.apache.maven.wrapper.MavenWrapperMain.main (MavenWrapperMain.java:61)
+[ERROR] 
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException
+[ERROR] 
+[ERROR] After correcting the problems, you can resume the build with the command
+[ERROR]   mvn <args> -rf :memorylens-javase

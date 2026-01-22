@@ -16,14 +16,14 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 
-public class CreateAdminSuccessTest extends AbstractTest {
+public class CreatePatientSuccessTest extends AbstractTest {
 
     @Override
     public boolean runTest() throws Exception {
-        // Setup Mocking
+        // Setup Mocks
         NetworkClient mockClient = mock(NetworkClient.class);
-        
-        // Mock Register Call to return successful "ok: true"
+        MemoryLens.setNetworkClient(mockClient);
+
         doAnswer(invocation -> {
             NetworkClient.Callback cb = invocation.getArgument(2);
             Map<String, Object> response = new HashMap<>();
@@ -33,33 +33,31 @@ public class CreateAdminSuccessTest extends AbstractTest {
         }).when(mockClient).post(eq("/api/auth/register"), anyMap(), any(NetworkClient.Callback.class));
 
         // Inject Mock
-        // Note: GenericNetworkService.getInstance() is normally used, but we replace the UseCase directly
         AuthUseCase mockUseCase = new AuthUseCase(new AuthGatewayNodeRed(mockClient));
         MemoryLens.setAuthUseCase(mockUseCase);
+        MemoryLens.setNetworkClient(mockClient);
 
-        // Run UI Test Steps
+        // Run Test
         waitForFormName("loginForm");
         clickButtonByName("goRegisterBtn");
         waitForFormName("registerForm");
-        setText("registerName", "admin");
-        setText("registerEmail", "admin@a.com");
-        setText("registerPassword", "admin123");
-        setText("registerChatId", "1414134108");
+        setText("registerName", "patient");
+        setText("registerEmail", "patient@p.com");
+        setText("registerPassword", "patient123");
+        
+        // Select Role: Patient (Index 1)
+        selectInList(new int[]{0, 8}, 1);
+        
         clickButtonByName("registerBtn");
         
-        // Wait for Success dialog
         waitForFormTitle("Success");
-        
-        // Ensure the dialog is named expectedly if asserting text on it
         if (Display.getInstance().getCurrent() != null) {
-            Display.getInstance().getCurrent().setName("Form_1");
+            Display.getInstance().getCurrent().setName("Form_Success");
         }
-        
         assertTextArea("Account created! Please login to join a group.");
         
         goBack(); // Closes dialog
         waitForFormName("loginForm");
-        
         return true;
     }
 }

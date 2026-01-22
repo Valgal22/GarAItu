@@ -59,7 +59,7 @@ public class AdminDashboard extends Form {
             return;
         }
 
-        GenericNetworkService.getInstance().get("/api/group/" + groupId + "/member",
+        MemoryLens.getNetworkClient().get("/api/group/" + groupId + "/member",
                 new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                     @Override
                     @SuppressWarnings("unchecked")
@@ -76,8 +76,7 @@ public class AdminDashboard extends Form {
                                 memberListContainer,
                                 list,
                                 AdminDashboard.this::addMemberRow,
-                                EMPTY_MEMBERS_MSG
-                        );
+                                EMPTY_MEMBERS_MSG);
                     }
 
                     @Override
@@ -137,7 +136,7 @@ public class AdminDashboard extends Form {
 
         String endpoint = "/api/group/" + groupId + "/member/" + memberId;
 
-        GenericNetworkService.getInstance().delete(endpoint, new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
+        MemoryLens.getNetworkClient().delete(endpoint, new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
             @Override
             public void onSuccess(Map<String, Object> response) {
                 Display.getInstance().callSerially(() -> {
@@ -148,9 +147,8 @@ public class AdminDashboard extends Form {
 
             @Override
             public void onFailure(String errorMessage) {
-                Display.getInstance().callSerially(() ->
-                        Dialog.show(TITLE_ERROR, "Delete failed: " + errorMessage, "OK", null)
-                );
+                Display.getInstance()
+                        .callSerially(() -> Dialog.show(TITLE_ERROR, "Delete failed: " + errorMessage, "OK", null));
             }
         });
     }
@@ -162,21 +160,19 @@ public class AdminDashboard extends Form {
             return;
         }
 
-        GenericNetworkService.getInstance().get("/api/groups/" + groupId + "/invite",
+        MemoryLens.getNetworkClient().get("/api/groups/" + groupId + "/invite",
                 new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                     @Override
                     public void onSuccess(Map<String, Object> response) {
                         String code = (String) response.get("code");
-                        Display.getInstance().callSerially(() ->
-                                Dialog.show("Invite Code", "Share this code: " + code, "OK", null)
-                        );
+                        Display.getInstance()
+                                .callSerially(() -> Dialog.show("Invite Code", "Share this code: " + code, "OK", null));
                     }
 
                     @Override
                     public void onFailure(String errorMessage) {
-                        Display.getInstance().callSerially(() ->
-                                Dialog.show(TITLE_ERROR, "Failed to connect: " + errorMessage, "OK", null)
-                        );
+                        Display.getInstance().callSerially(
+                                () -> Dialog.show(TITLE_ERROR, "Failed to connect: " + errorMessage, "OK", null));
                     }
                 });
     }

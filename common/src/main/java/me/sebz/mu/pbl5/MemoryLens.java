@@ -31,8 +31,26 @@ public class MemoryLens extends Lifecycle {
 
     // ---- Test-friendly logic layer ----
     // For JUnit you can instantiate AuthUseCase with a fake AuthGateway.
-    private static final AuthUseCase AUTH_USE_CASE = new AuthUseCase(
+    private static AuthUseCase AUTH_USE_CASE = new AuthUseCase(
             new AuthGatewayNodeRed(GenericNetworkService.getInstance()));
+
+    public static void setAuthUseCase(AuthUseCase useCase) {
+        AUTH_USE_CASE = useCase;
+    }
+
+    public static AuthUseCase getAuthUseCase() {
+        return AUTH_USE_CASE;
+    }
+
+    private static me.sebz.mu.pbl5.net.NetworkClient NETWORK_CLIENT = GenericNetworkService.getInstance();
+
+    public static void setNetworkClient(me.sebz.mu.pbl5.net.NetworkClient client) {
+        NETWORK_CLIENT = client;
+    }
+
+    public static me.sebz.mu.pbl5.net.NetworkClient getNetworkClient() {
+        return NETWORK_CLIENT;
+    }
 
     private static String sessionToken;
     private static Long memberId;
@@ -209,13 +227,6 @@ public class MemoryLens extends Lifecycle {
         center.add(passwordField);
         center.add(loginButton);
         center.add(registerButton);
-
-        // DEBUG BUTTON TO RUN ALL TESTS
-        Button runTestsBtn = new Button("Run All Tests");
-        runTestsBtn.addActionListener(evt -> {
-            InAppTestRunner.runAllTests();
-        });
-        center.add(runTestsBtn);
 
         loginForm.add(BorderLayout.CENTER, center);
         loginForm.show();

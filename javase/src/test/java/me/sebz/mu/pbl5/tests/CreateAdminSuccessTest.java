@@ -20,9 +20,10 @@ public class CreateAdminSuccessTest extends AbstractTest {
 
     @Override
     public boolean runTest() throws Exception {
-        // Setup Mocking
+        // Setup Global Mock (Good practice to reset/set globally if we move to global mocks)
         NetworkClient mockClient = mock(NetworkClient.class);
-        
+        MemoryLens.setNetworkClient(mockClient);
+
         // Mock Register Call to return successful "ok: true"
         doAnswer(invocation -> {
             NetworkClient.Callback cb = invocation.getArgument(2);
@@ -36,6 +37,9 @@ public class CreateAdminSuccessTest extends AbstractTest {
         // Note: GenericNetworkService.getInstance() is normally used, but we replace the UseCase directly
         AuthUseCase mockUseCase = new AuthUseCase(new AuthGatewayNodeRed(mockClient));
         MemoryLens.setAuthUseCase(mockUseCase);
+        
+        // Ensure global client is set for any other logic
+        MemoryLens.setNetworkClient(mockClient);
 
         // Run UI Test Steps
         waitForFormName("loginForm");
@@ -57,7 +61,9 @@ public class CreateAdminSuccessTest extends AbstractTest {
         
         assertTextArea("Account created! Please login to join a group.");
         
-        goBack(); // Closes dialog
+        // goBack(); 
+        // Using explicit click to ensure dialog closes and triggers subsequent logic
+        clickButtonByLabel("OK");
         waitForFormName("loginForm");
         
         return true;

@@ -58,7 +58,7 @@ public class FamilyDashboard extends Form {
             return;
         }
 
-        GenericNetworkService.getInstance().get("/api/group/" + groupId + "/member",
+        MemoryLens.getNetworkClient().get("/api/group/" + groupId + "/member",
                 new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                     @Override
                     public void onSuccess(Map<String, Object> response) {
@@ -200,7 +200,7 @@ public class FamilyDashboard extends Form {
             return;
         }
 
-        GenericNetworkService.getInstance().get("/api/group/" + groupId + "/member",
+        MemoryLens.getNetworkClient().get("/api/group/" + groupId + "/member",
                 new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                     @Override
                     public void onSuccess(Map<String, Object> response) {
@@ -266,7 +266,7 @@ public class FamilyDashboard extends Form {
             updateData.put("name", newName);
             updateData.put("context", newContext);
 
-            GenericNetworkService.getInstance().put("/garAItu/member/" + MemoryLens.getMemberId(), updateData,
+            MemoryLens.getNetworkClient().put("/garAItu/member/" + MemoryLens.getMemberId(), updateData,
                     new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                         @Override
                         public void onSuccess(Map<String, Object> response) {
@@ -341,7 +341,7 @@ public class FamilyDashboard extends Form {
         data.put("id", mId);
         data.put("groupId", gId);
 
-        GenericNetworkService.getInstance().upload("/api/upload", imagePath, data,
+        MemoryLens.getNetworkClient().upload("/api/upload", imagePath, data,
                 new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                     @Override
                     public void onSuccess(Map<String, Object> response) {

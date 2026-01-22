@@ -61,7 +61,7 @@ public class PatientDashboard extends Form {
             Map<String, Object> params = new HashMap<>();
             params.put("groupId", groupId);
 
-            GenericNetworkService.getInstance().upload("/api/recognize", filePath, params,
+            MemoryLens.getNetworkClient().upload("/api/recognize", filePath, params,
                     new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                         @Override
                         public void onSuccess(Map<String, Object> response) {
@@ -76,9 +76,8 @@ public class PatientDashboard extends Form {
 
                         @Override
                         public void onFailure(String errorMessage) {
-                            Display.getInstance().callSerially(() ->
-                                    Dialog.show(TITLE_ERROR, "Upload failed: " + errorMessage, "OK", null)
-                            );
+                            Display.getInstance().callSerially(
+                                    () -> Dialog.show(TITLE_ERROR, "Upload failed: " + errorMessage, "OK", null));
                         }
                     });
         }, CN1Constants.GALLERY_IMAGE);
@@ -95,7 +94,8 @@ public class PatientDashboard extends Form {
 
         if (audioData.length > 0) {
             try {
-                Media m = MediaManager.createMedia(new java.io.ByteArrayInputStream(audioData), "audio/wav", () -> {});
+                Media m = MediaManager.createMedia(new java.io.ByteArrayInputStream(audioData), "audio/wav", () -> {
+                });
                 if (m != null) {
                     m.play();
                 }

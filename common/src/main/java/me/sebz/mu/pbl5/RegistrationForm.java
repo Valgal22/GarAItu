@@ -21,8 +21,7 @@ public class RegistrationForm extends Form {
 
     private static final String UIID_TEXT_FIELD = "TextField";
 
-    private final AuthUseCase authUseCase =
-            new AuthUseCase(new AuthGatewayNodeRed(GenericNetworkService.getInstance()));
+    private final AuthUseCase authUseCase = MemoryLens.getAuthUseCase();
 
     public RegistrationForm() {
         super("Register", new BorderLayout());
@@ -66,13 +65,11 @@ public class RegistrationForm extends Form {
         Button helpButton = new Button("?");
         helpButton.setName("registerChatHelpBtn");
         helpButton.setUIID("ButtonSecondary");
-        helpButton.addActionListener(e ->
-                Dialog.show("Telegram ID help",
-                        "Search for '@userinfobot' on Telegram.\n" +
-                                "Click 'Start'.\n" +
-                                "Copy the ID number it gives you and paste it here.",
-                        "OK", null)
-        );
+        helpButton.addActionListener(e -> Dialog.show("Telegram ID help",
+                "Search for '@userinfobot' on Telegram.\n" +
+                        "Click 'Start'.\n" +
+                        "Copy the ID number it gives you and paste it here.",
+                "OK", null));
 
         Button registerButton = new Button("Register");
         registerButton.setName("registerBtn");

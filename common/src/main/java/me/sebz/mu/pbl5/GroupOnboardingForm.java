@@ -57,7 +57,7 @@ public class GroupOnboardingForm extends Form {
             Map<String, Object> data = new HashMap<>();
             data.put("inviteCode", code);
 
-            GenericNetworkService.getInstance().post("/api/groups/join", data,
+            MemoryLens.getNetworkClient().post("/api/groups/join", data,
                     new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                         @Override
                         public void onSuccess(Map<String, Object> response) {
@@ -124,7 +124,7 @@ public class GroupOnboardingForm extends Form {
         Map<String, Object> data = new HashMap<>();
         data.put("name", name);
 
-        GenericNetworkService.getInstance().post("/api/groups/create", data,
+        MemoryLens.getNetworkClient().post("/api/groups/create", data,
                 new me.sebz.mu.pbl5.net.NetworkClient.Callback() {
                     @Override
                     public void onSuccess(Map<String, Object> response) {
@@ -141,9 +141,8 @@ public class GroupOnboardingForm extends Form {
 
                     @Override
                     public void onFailure(String errorMessage) {
-                        Display.getInstance().callSerially(() ->
-                                Dialog.show(TITLE_ERROR, "Creation failed: " + errorMessage, "OK", null)
-                        );
+                        Display.getInstance().callSerially(
+                                () -> Dialog.show(TITLE_ERROR, "Creation failed: " + errorMessage, "OK", null));
                     }
                 });
     }

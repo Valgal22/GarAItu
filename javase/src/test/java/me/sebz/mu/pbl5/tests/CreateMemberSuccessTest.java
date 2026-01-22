@@ -16,14 +16,14 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 
-public class CreateAdminSuccessTest extends AbstractTest {
+public class CreateMemberSuccessTest extends AbstractTest {
 
     @Override
     public boolean runTest() throws Exception {
-        // Setup Mocking
+        // Setup Mocks
         NetworkClient mockClient = mock(NetworkClient.class);
-        
-        // Mock Register Call to return successful "ok: true"
+        MemoryLens.setNetworkClient(mockClient);
+
         doAnswer(invocation -> {
             NetworkClient.Callback cb = invocation.getArgument(2);
             Map<String, Object> response = new HashMap<>();
@@ -33,33 +33,37 @@ public class CreateAdminSuccessTest extends AbstractTest {
         }).when(mockClient).post(eq("/api/auth/register"), anyMap(), any(NetworkClient.Callback.class));
 
         // Inject Mock
-        // Note: GenericNetworkService.getInstance() is normally used, but we replace the UseCase directly
         AuthUseCase mockUseCase = new AuthUseCase(new AuthGatewayNodeRed(mockClient));
         MemoryLens.setAuthUseCase(mockUseCase);
+        MemoryLens.setNetworkClient(mockClient);
 
-        // Run UI Test Steps
+        // Run Test
         waitForFormName("loginForm");
         clickButtonByName("goRegisterBtn");
         waitForFormName("registerForm");
-        setText("registerName", "admin");
-        setText("registerEmail", "admin@a.com");
-        setText("registerPassword", "admin123");
-        setText("registerChatId", "1414134108");
-        clickButtonByName("registerBtn");
+        setText("registerName", "member");
+        setText("registerEmail", "member@m.com");
+        setText("registerPassword", "member123");
         
-        // Wait for Success dialog
-        waitForFormTitle("Success");
-        
-        // Ensure the dialog is named expectedly if asserting text on it
+        // Select Role: Family Member (Index 2 in roles array)
         if (Display.getInstance().getCurrent() != null) {
-            Display.getInstance().getCurrent().setName("Form_1");
+            // Ensure UIID naming if needed, but selectInList usually works by component index or UI logic
         }
         
+        // The original test used index 2 for "Family Member"
+        // String[] roles = { "Caregiver (Admin)", "Patient", "Family Member" };
+        selectInList(new int[]{0, 8}, 2); // 0,8 might be path to ComboBox in component tree
+        
+        clickButtonByName("registerBtn");
+        
+        waitForFormTitle("Success");
+        if (Display.getInstance().getCurrent() != null) {
+            Display.getInstance().getCurrent().setName("Form_Success");
+        }
         assertTextArea("Account created! Please login to join a group.");
         
         goBack(); // Closes dialog
         waitForFormName("loginForm");
-        
         return true;
     }
 }
